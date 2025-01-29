@@ -146,9 +146,7 @@ function addCurrentLocationMarker(map) {
 
             // Add the marker to the map
             L.marker([latitude, longitude], { icon: locationIcon })
-                .addTo(map)
-                .bindPopup("You are here")
-                .openPopup();
+                .addTo(map);
 
             // Zoom to the user's location
             map.setView([latitude, longitude], 15);
@@ -495,7 +493,7 @@ if (currentPolygonLayerAmravati) {
 currentPolygonLayerAmravati = L.geoJSON(featureAmravati.geometry, {
    onEachFeature: (feature, layer) => {
        // Add a popup with tabular data
-       layer.bindPopup(tableHtml);
+       layer.bindPopup(tableHtml).openPopup();
    }
 }).addTo(map);
 
@@ -548,10 +546,9 @@ const propertiesToShow = [
                currentPolygonLayerAkola = L.geoJSON(featureAkola.geometry, {
                    onEachFeature: (feature, layer) => {
                        // Add a popup with tabular data
-                       layer.bindPopup(tableHtml);
+                       layer.bindPopup(tableHtml).openPopup();
                    }
                }).addTo(map);
-
                // Zoom to the bounds of the new polygon layer
                map.fitBounds(currentPolygonLayerAkola.getBounds());
            }

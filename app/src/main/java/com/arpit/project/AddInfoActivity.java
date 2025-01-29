@@ -15,19 +15,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import android.location.Location;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 public class AddInfoActivity extends AppCompatActivity {
@@ -47,7 +42,6 @@ public class AddInfoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_info);
-
         etCrop = findViewById(R.id.etCrop);
         etCropStage = findViewById(R.id.etCropStage);
         imagePreview = findViewById(R.id.imagePreview);
@@ -55,7 +49,6 @@ public class AddInfoActivity extends AppCompatActivity {
         btnSubmit = findViewById(R.id.btnSubmit);
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
         // Get current location
         getCurrentLocation();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -76,7 +69,6 @@ public class AddInfoActivity extends AppCompatActivity {
         // Get coordinates from MainActivity
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
-        Toast.makeText(this, "Lat: " + latitude + ", Lng: " + longitude, Toast.LENGTH_SHORT).show();
 
         // Handle image upload
         btnUploadImage.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +94,6 @@ public class AddInfoActivity extends AppCompatActivity {
                             if (location != null) {
                                 latitude = location.getLatitude();
                                 longitude = location.getLongitude();
-                                Toast.makeText(AddInfoActivity.this, "Lat: " + latitude + ", Lng: " + longitude, Toast.LENGTH_SHORT).show();
                             } else {
                                 Toast.makeText(AddInfoActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                             }
@@ -130,11 +121,13 @@ public class AddInfoActivity extends AppCompatActivity {
                 // Gallery Image
                 Uri imageUri = data.getData();
                 convertImageToBase64(imageUri);
+                imagePreview.setImageURI(imageUri); // Update ImageView
             } else {
                 // Camera Image
                 Bitmap photo = (Bitmap) data.getExtras().get("data");
                 if (photo != null) {
                     convertBitmapToBase64(photo);
+                    imagePreview.setImageBitmap(photo); // Update ImageView
                 } else {
                     Toast.makeText(this, "Failed to capture image", Toast.LENGTH_SHORT).show();
                 }
@@ -178,7 +171,6 @@ public class AddInfoActivity extends AppCompatActivity {
         data.put("crop", crop);
         data.put("cropStage", cropStage);
         data.put("photo", imageBase64);
-
         db.collection("crop_data").add(data)
                 .addOnSuccessListener(documentReference -> Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show());
