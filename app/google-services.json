@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "883429484543",
+    "firebase_url": "https://bhuquanta-default-rtdb.firebaseio.com",
+    "project_id": "bhuquanta",
+    "storage_bucket": "bhuquanta.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:883429484543:android:1048a146c961897862e9ca",
+        "android_client_info": {
+          "package_name": "com.arpit.project"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "883429484543-t7bd2a3rp8eij2ll4ameone8bmqga05m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.arpit.project",
+            "certificate_hash": "556006822cb5994f00211016e2ceb65224174951"
+          }
+        },
+        {
+          "client_id": "883429484543-me1b47joj93uinl0tdf90hnj86defva4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDdPo8lz5lvZzpZEWd8Z7Dq8a4EO5nz1U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "883429484543-me1b47joj93uinl0tdf90hnj86defva4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

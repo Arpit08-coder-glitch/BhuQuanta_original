@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".AboutUs">
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="#ffffff"
+        >
+
+    <TextView
+        android:id="@+id/about_us"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:text="About Us"
+        android:textAlignment="viewStart"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif"
+        android:textScaleX="1"
+        android:scaleY="1"
+        android:autoSizeMaxTextSize="@dimen/cardview_compat_inset_shadow"
+        android:background="#ffffff"
+
+        >
+
+    </TextView>
+    </ScrollView>
+
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+
+
+        <TextView
+            android:id="@+id/about_us_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="\n\nWelcome to BhuQuanta, an innovative application developed by Quantasip. Our team, consisting of Arpit Singh and Rutwik Kabre, is dedicated to providing cutting-edge solutions to meet your needs. With a passion for technology and a commitment to excellence, we have designed BhuQuanta to offer an exceptional user experience, integrating the latest advancements in our field.\n\nQuantasip, a leader in cadastral mapping and geospatial services, is renowned for its expertise in various sectors including electrical, agriculture, navigation, and infrastructure. Established as part of the JnT Group in 2008, Quantasip has grown to become one of India's top GIS companies, recognized for its innovative solutions and comprehensive GIServices. With a team of over 80 professionals, including geospatial analysts, developers, and data analysts, we have successfully executed numerous high-profile projects across India.\n\nOur services include providing detailed cadastral data, land record verification, and data cleaning and correction. We are proud partners of the National Highways Authority of India (NHAI) for GIS-enabled toll systems and have developed extensive databases covering road networks, railway networks, educational institutions, and government offices, among others. Our commitment to delivering high-quality, reliable geospatial solutions makes us a trusted partner in infrastructure development.\n\nAt Quantasip, we strive to drive innovation and deliver high-quality applications that enhance productivity and simplify complex tasks. Thank you for choosing BhuQuanta – we look forward to serving you."
+            android:textAlignment="viewStart"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:textAppearance="@dimen/cardview_compat_inset_shadow"
+            android:textStyle="italic"/>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

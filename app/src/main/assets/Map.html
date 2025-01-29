@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demonstration</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        .dropdown-panel {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            border-top: 2px solid #ccc;
+            box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            transition: bottom 0.3s ease;
+            z-index: 500;
+        }
+        .dropdown-panel.show {
+            bottom: 0;
+        }
+        .toggle-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 600;
+        }
+        .dropdown-panel select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.search-button:hover {
+    background-color: #0056b3;
+}
+/* Style for popup table */
+.popup-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+}
+
+.popup-table th,
+.popup-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.popup-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.popup-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.popup-table tr:hover {
+    background-color: #e9e9e9;
+}
+/* Style for the popup content */
+.leaflet-popup-content {
+    max-height: 300px; /* Set the desired fixed height */
+    max-width: 200px;
+    overflow-y: auto;  /* Enable vertical scrolling */
+    -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+}
+
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="dropdown-panel" class="dropdown-panel">
+    <label for="district">District:</label>
+    <select id="district"><option>Select District</option></select>
+    <label for="tehsil">Tehsil:</label>
+    <select id="tehsil"><option>Select Tehsil</option></select>
+    <label for="village">Village:</label>
+    <select id="village"><option>Select Village</option></select>
+    <!-- Add Search Button Below the Selects -->
+    <button id="search-btn" class="search-button">Search</button>
+</div>
+<button class="toggle-button" onclick="toggleDropdown()"><i class="fas fa-chevron-up"></i></button>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    // Initialize the map
+    const map = L.map('map').setView([20.5937, 78.9629], 5); // Centered near San Francisco for the lake layer
+
+// Define different base layers
+const osmLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
+ maxZoom: 19,
+ attribution: ' ',
+ subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+});
+
+const googleSatelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {
+ maxZoom: 19,
+ subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+});
+
+const hybridLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+ maxZoom: 19,
+ subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+});
+
+const terrainLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}', {
+ maxZoom: 19,
+ subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+});
+
+const trafficLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m,traffic&hl=en&x={x}&y={y}&z={z}', {
+ maxZoom: 19,
+ subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+});
+
+// Add WMS layer from GeoServer with higher z-index
+const wmsLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+ layers: 'ne:amravati', // WMS layer name
+ format: 'image/png',
+ transparent: true,
+ attribution: "© QuantaSIP"
+}).addTo(map);
+const wmsLayer1 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+ layers: 'ne:akola', // WMS layer name
+ format: 'image/png',
+ transparent: true,
+ attribution: "© QuantaSIP"
+}).addTo(map);
+
+wmsLayer.getContainer().style.zIndex = '400'; // Ensure WMS layer is above background layers
+wmsLayer1.getContainer().style.zIndex = '400'; // Ensure WMS layer is above background layers
+
+// Add base layers control to the map
+const baseLayers = {
+ "Google Road Map": osmLayer,
+ "Google Satellite Map": googleSatelliteLayer,
+ "Google Hybrid Map": hybridLayer,
+ "Google Terrain Map": terrainLayer,
+ "Google Traffic Map": trafficLayer
+};
+
+// Default to OSM layer
+osmLayer.addTo(map);
+
+L.control.layers(baseLayers, null, { position: 'bottomleft' }).addTo(map);
+
+// Variable to store the currently added feature layer
+let currentPolygonLayer = null;
+function toggleDropdown() {
+const panel = document.getElementById('dropdown-panel');
+panel.classList.toggle('show');
+
+const button = document.querySelector('.toggle-button i');
+const button1 = document.querySelector('.toggle-button');
+button.classList.toggle('fa-chevron-down');
+button.classList.toggle('fa-chevron-up');
+
+const layersControlDiv = document.querySelector('.leaflet-control-layers');
+
+if (panel.classList.contains('show')) {
+   const panelHeight = panel.offsetHeight; // Get the dropdown panel height dynamically
+   layersControlDiv.style.bottom = `${panelHeight + 20}px`; // Adjust based on panel height
+   button1.style.bottom=`${panelHeight}px`;
+} else {
+   layersControlDiv.style.bottom = '10px'; // Reset when dropdown is closed
+   button1.style.bottom= '20px';
+}
+}
+// Function to fetch feature info from WMS via a proxy and populate select options
+async function populateSelectOptions() {
+// Hardcode district names
+const districts = ['Amravati', 'Akola'];
+
+// Populate district select options
+populateSelect('district', districts);
+}
+
+// Function to populate a select element with options
+function populateSelect(selectId, options) {
+const select = document.getElementById(selectId);
+select.innerHTML = ''; // Clear existing options
+const defaultOption = document.createElement('option');
+defaultOption.textContent = `Select ${selectId.charAt(0).toUpperCase() + selectId.slice(1)}`;
+select.appendChild(defaultOption);
+
+options.forEach(option => {
+   const optionElement = document.createElement('option');
+   optionElement.value = option;
+   optionElement.textContent = option;
+   select.appendChild(optionElement);
+});
+}
+
+// Function to fetch tehsils based on selected district
+async function fetchTehsils(district) {
+// Determine the layer based on the selected district
+const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:akola';
+
+const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
+
+// Proxy URL
+const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+console.log(url);
+
+try {
+   const response = await fetch(url);
+   const data = await response.json();
+
+   if (data.features && data.features.length > 0) {
+       const tehsils = new Set();
+
+       // Extract distinct tehsil values for the selected district
+       data.features.forEach((feature) => {
+           const properties = feature.properties;
+           tehsils.add(properties.tehsil);
+       });
+
+       // Populate tehsil select options
+       populateSelect('tehsil', Array.from(tehsils));
+   }
+} catch (error) {
+   console.error('Error fetching tehsils:', error);
+}
+}
+
+// Function to fetch villages based on selected tehsil and district
+async function fetchVillages(district, tehsil) {
+// Determine the layer based on the selected district
+const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:akola';
+
+const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
+
+// Proxy URL
+const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+
+try {
+   const response = await fetch(url);
+   const data = await response.json();
+
+   if (data.features && data.features.length > 0) {
+       const villages = new Set();
+
+       // Extract distinct village values for the selected tehsil
+       data.features.forEach((feature) => {
+           const properties = feature.properties;
+           villages.add(properties.village);
+       });
+
+       // Populate village select options
+       populateSelect('village', Array.from(villages));
+   }
+} catch (error) {
+   console.error('Error fetching villages:', error);
+}
+}
+
+// Event listener for district selection
+document.getElementById('district').addEventListener('change', function () {
+const selectedDistrict = this.value;
+if (selectedDistrict) {
+   fetchTehsils(selectedDistrict);
+   // Clear tehsil and village options when district changes
+   populateSelect('tehsil', []);
+   populateSelect('village', []);
+}
+});
+
+// Event listener for tehsil selection
+document.getElementById('tehsil').addEventListener('change', function () {
+const selectedDistrict = document.getElementById('district').value;
+const selectedTehsil = this.value;
+if (selectedDistrict && selectedTehsil) {
+   fetchVillages(selectedDistrict, selectedTehsil);
+}
+});
+
+// Call the function to populate the district dropdown when the page loads
+populateSelectOptions();
+let currentPolygonGroup = null;  // Variable to keep track of the current polygon group
+let currentPolygonLayerAmravati = null; // Variable for Amravati polygon layer
+let currentPolygonLayerAkola = null;    // Variable for Akola polygon layer
+// Function to handle search button click
+document.getElementById('search-btn').addEventListener('click', async function () {
+   const district = document.getElementById('district').value;
+   const tehsil = document.getElementById('tehsil').value;
+   const village = document.getElementById('village').value;
+   // Remove current polygon layers (if any) when search button is clicked
+   if (currentPolygonLayerAmravati) {
+       map.removeLayer(currentPolygonLayerAmravati);
+       currentPolygonLayerAmravati = null;
+   }
+   if (currentPolygonLayerAkola) {
+       map.removeLayer(currentPolygonLayerAkola);
+       currentPolygonLayerAkola = null;
+   }
+
+   if (!district || !tehsil || !village) {
+       alert('Please select district, tehsil, and village.');
+       return;
+   }
+
+   // Escape single quotes in village name for CQL filter
+   const escapedVillage = village.replace(/'/g, "''");
+
+   // Construct the GetFeatureInfo URL based on selected values
+   const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:akola'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
+
+   // Proxy URL
+   const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+
+   try {
+       const response = await fetch(url);
+       const data = await response.json();
+
+       if (data.features && data.features.length > 0) {
+           // Remove the previous polygon group if it exists
+           if (currentPolygonGroup) {
+               map.removeLayer(currentPolygonGroup);
+               currentPolygonGroup = null;
+           }
+
+           // Create a new group to hold all the polygon layers
+           let polygonGroup = L.layerGroup();
+           let bounds = L.latLngBounds();  // Initialize an empty bounds object
+
+           // Filter all features that match the district, tehsil, and village
+           const matchingFeatures = data.features.filter((feature) => {
+               const properties = feature.properties;
+               return properties.district === district && properties.tehsil === tehsil && properties.village === village;
+           });
+
+           // Add each matching feature to the map
+           matchingFeatures.forEach((feature) => {
+               const polygonLayer = L.geoJSON(feature.geometry);
+               polygonGroup.addLayer(polygonLayer);
+
+               // Extend the bounds to include this polygon's bounds
+               bounds.extend(polygonLayer.getBounds());
+           });
+           // Add the new polygon group to the map
+           polygonGroup.addTo(map);
+           // Zoom to the bounds of all the polygons
+           map.fitBounds(bounds);
+           // Store the current polygon group for future removal
+           currentPolygonGroup = polygonGroup;
+       } else {
+           alert('No features found for the selected district, tehsil, and village.');
+       }
+   } catch (error) {
+       console.error('Error fetching feature info:', error);
+   }
+});
+// Handle map click to remove current polygon group
+map.on('click', async (e) => {
+   // Remove current polygon group if it exists
+   if (currentPolygonGroup) {
+       map.removeLayer(currentPolygonGroup);
+       currentPolygonGroup = null;
+   }
+
+   const { lat, lng } = e.latlng;
+
+   // Construct the GeoServer GetFeatureInfo URL for Amravati layer
+   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:amravati&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+
+   // Construct the GeoServer GetFeatureInfo URL for Akola layer
+   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:akola&query_layers=ne:akola&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+
+   // Proxy URL for both Amravati and Akola layers
+   const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
+   const urlAkola = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAkola)}`;
+   try {
+       const [responseAmravati, responseAkola] = await Promise.all([fetch(urlAmravati), fetch(urlAkola)]);
+
+       // Handle the Amravati response
+       if (responseAmravati.ok) {
+           const dataAmravati = await responseAmravati.json();
+
+           if (dataAmravati.features && dataAmravati.features.length > 0) {
+             const featureAmravati = dataAmravati.features[0];
+const propertiesAmravati = featureAmravati.properties;
+const featureIdAmravati = featureAmravati.id;
+
+// List of properties to show with their headers
+const propertiesToShow = [
+   { name: 'state', header: 'State' },
+   { name: 'state_code', header: 'State Code' },
+   { name: 'district', header: 'District' },
+   { name: 'distt_code', header: 'District Code' },
+   { name: 'tehsil', header: 'Tehsil' },
+   { name: 'teh_code', header: 'Tehsil Code' },
+   { name: 'village', header: 'Village' },
+   { name: 'lgd_code', header: 'LGD' },
+   { name: 'khasra_no', header: 'Khasra No' },
+   { name: 'area_ac', header: 'Area (Ac)' },
+   { name: 'lu_lc', header: 'LU/LC' }
+];
+
+// Build the table HTML for the popup
+let tableHtml = `<table class="popup-table"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
+
+// Loop through the propertiesToShow and create the table rows
+propertiesToShow.forEach(property => {
+   const value = propertiesAmravati[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+   tableHtml += `<tr><td>${property.header}</td><td>${value}</td></tr>`;
+});
+
+tableHtml += `</tbody></table>`;
+
+// Remove the previous polygon layer for Amravati, if any
+if (currentPolygonLayerAmravati) {
+   map.removeLayer(currentPolygonLayerAmravati);
+   currentPolygonLayerAmravati = null;
+}
+
+// Create a new polygon layer for Amravati
+currentPolygonLayerAmravati = L.geoJSON(featureAmravati.geometry, {
+   onEachFeature: (feature, layer) => {
+       // Add a popup with tabular data
+       layer.bindPopup(tableHtml);
+   }
+}).addTo(map);
+
+// Zoom to the bounds of the new polygon layer
+map.fitBounds(currentPolygonLayerAmravati.getBounds());
+
+           }
+       } else {
+           console.error('Error: Could not retrieve Amravati feature information');
+       }
+
+       // Handle the Akola response
+       if (responseAkola.ok) {
+           const dataAkola = await responseAkola.json();
+
+           if (dataAkola.features && dataAkola.features.length > 0) {
+               const featureAkola = dataAkola.features[0];
+               const propertiesAkola = featureAkola.properties;
+               const featureIdAkola = featureAkola.id;
+               // List of properties to show with their headers
+const propertiesToShow = [
+   { name: 'state', header: 'State' },
+   { name: 'state_code', header: 'State Code' },
+   { name: 'district', header: 'District' },
+   { name: 'distt_code', header: 'District Code' },
+   { name: 'tehsil', header: 'Tehsil' },
+   { name: 'teh_code', header: 'Tehsil Code' },
+   { name: 'village', header: 'Village' },
+   { name: 'lgd_code', header: 'LGD' },
+   { name: 'khasra_no', header: 'Khasra No' },
+   { name: 'area_ac', header: 'Area (Ac)' },
+   { name: 'lu_lc', header: 'LU/LC' }
+];
+
+               // Build the table HTML for the popup
+               let tableHtml = `<table class="popup-table"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
+                 propertiesToShow.forEach(property => {
+   const value = propertiesAkola[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+   tableHtml += `<tr><td>${property.header}</td><td>${value}</td></tr>`;
+});
+               tableHtml += `</tbody></table>`;
+
+               // Remove the previous polygon layer for Akola, if any
+               if (currentPolygonLayerAkola) {
+                   map.removeLayer(currentPolygonLayerAkola);
+                   currentPolygonLayerAkola = null;
+               }
+
+               // Create a new polygon layer for Akola
+               currentPolygonLayerAkola = L.geoJSON(featureAkola.geometry, {
+                   onEachFeature: (feature, layer) => {
+                       // Add a popup with tabular data
+                       layer.bindPopup(tableHtml);
+                   }
+               }).addTo(map);
+
+               // Zoom to the bounds of the new polygon layer
+               map.fitBounds(currentPolygonLayerAkola.getBounds());
+           }
+       } else {
+           console.error('Error: Could not retrieve Akola feature information');
+       }
+
+   } catch (error) {
+       console.error('Error fetching feature info:', error);
+   }
+});
+</script>
+</body>
+</html>
