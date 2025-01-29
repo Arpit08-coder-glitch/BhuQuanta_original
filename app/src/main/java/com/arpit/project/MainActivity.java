@@ -10,11 +10,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -34,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean doubleBackToExitPressedOnce = false;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private Handler handler = new Handler();
+    
     private Runnable resetDoubleBackFlag = new Runnable() {
         @Override
         public void run() {
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.webView);
+        Button btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setGeolocationEnabled(true);
         webView.getSettings().setAllowFileAccessFromFileURLs(true);
@@ -62,51 +66,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        webView.addJavascriptInterface(new Object() {
-            @android.webkit.JavascriptInterface
-            public void fetchDistricts() {
-                fetchFromUrl("http://192.168.1.38:3000/api/districts", "setDistricts");
-            }
-            @android.webkit.JavascriptInterface
-            public void fetchTehsils(String district) {
-                fetchFromUrl("http://192.168.1.38:3000/api/tehsils?district=" + district, "setTehsils");
-            }
-            @android.webkit.JavascriptInterface
-            public void fetchVillages(String tehsil) {
-                fetchFromUrl("http://192.168.1.38:3000/api/villages?tehsil=" + tehsil, "setVillages");
-            }
-            @android.webkit.JavascriptInterface
-            public void fetchKhasras(String village) {
-                fetchFromUrl("http://192.168.1.38:3000/api/khasras?village=" + village, "setKhasras");
-            }
-            private void fetchFromUrl(String urlString, String callbackFunction) {
-                new Thread(() -> {
-                    try {
-                        URL url = new URL(urlString);
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestMethod("GET");
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                        StringBuilder result = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            result.append(line);
-                        }
-                        reader.close();
-                        String data = result.toString();
-                        // Pass the data to the WebView
-                        runOnUiThread(() -> {
-                            webView.evaluateJavascript(callbackFunction + "(" + data + ");", null);
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        runOnUiThread(() -> {
-                            Toast.makeText(MainActivity.this, "Failed to fetch data", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                }).start();
-            }
-        }, "Android");
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
@@ -116,6 +75,14 @@ public class MainActivity extends AppCompatActivity {
         } else {
             loadMap();
         }
+        btnAddInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Open AddInfoActivity when button is clicked
+                Intent intent = new Intent(MainActivity.this, AddInfoActivity.class);
+                startActivity(intent);
+            }
+        });
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
