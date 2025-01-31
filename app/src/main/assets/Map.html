@@ -19,12 +19,13 @@
             bottom: -100%;
             left: 0;
             right: 0;
-            background-color: #ffffff;
+            background-color: #000000;
             border-top: 2px solid #ccc;
             box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.2);
             padding: 20px;
             transition: bottom 0.3s ease;
             z-index: 500;
+            opacity:0.9;
         }
         .dropdown-panel.show {
             bottom: 0;
@@ -126,8 +127,7 @@
 /* Toast Message */
 .toast {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    top: 20px;
     background-color: red;
     color: white;
     padding: 10px;
@@ -135,29 +135,30 @@
     z-index: 1000;
     font-size: 14px;
 }
+        .loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20px;
+}
+
     </style>
 </head>
 <body>
 <div id="map"></div>
 
 <div id="dropdown-panel" class="dropdown-panel">
-    <label for="district">District:</label>
     <select id="district">
         <option>Select District</option>
     </select>
-
-    <label for="tehsil">Tehsil:</label>
     <select id="tehsil">
         <option>Select Tehsil</option>
     </select>
     <div id="tehsil-progress" class="progress-bar"></div>
-
-    <label for="village">Village:</label>
     <select id="village">
         <option>Select Village</option>
     </select>
     <div id="village-progress" class="progress-bar"></div>
-
     <button id="search-btn" class="search-button">Search</button>
 </div>
 <button class="toggle-button" onclick="toggleDropdown()"><i class="fas fa-chevron-up"></i></button>
@@ -275,7 +276,7 @@ const layersControlDiv = document.querySelector('.leaflet-control-layers');
 
 if (panel.classList.contains('show')) {
    const panelHeight = panel.offsetHeight; // Get the dropdown panel height dynamically
-   layersControlDiv.style.bottom = `${panelHeight + 20}px`; // Adjust based on panel height
+   layersControlDiv.style.bottom = `${panelHeight + 5}px`; // Adjust based on panel height
    button1.style.bottom=`${panelHeight}px`;
 } else {
    layersControlDiv.style.bottom = '10px'; // Reset when dropdown is closed
@@ -306,17 +307,6 @@ options.forEach(option => {
    select.appendChild(optionElement);
 });
 }
-// Function to show loader inside select
-function showLoader(selectId) {
-    const select = document.getElementById(selectId);
-    select.innerHTML = ''; // Clear existing options
-    const loadingOption = document.createElement('option');
-    loadingOption.textContent = 'Loading...';
-    loadingOption.disabled = true;
-    loadingOption.selected = true;
-    select.appendChild(loadingOption);
-}
-
 // Function to show progress bar
 function showProgressBar(selectId) {
     const progressBar = document.getElementById(`${selectId}-progress`);
@@ -342,7 +332,6 @@ function showErrorToast(message) {
 
 // Function to fetch tehsils based on selected district
 async function fetchTehsils(district) {
-showLoader('tehsil');
     showProgressBar('tehsil');
 // Determine the layer based on the selected district
 const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
@@ -379,7 +368,6 @@ try {
 
 // Function to fetch villages based on selected tehsil and district
 async function fetchVillages(district, tehsil) {
-showLoader('village');
     showProgressBar('village');
 // Determine the layer based on the selected district
 const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';

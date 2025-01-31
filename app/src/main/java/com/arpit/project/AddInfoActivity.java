@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,7 +15,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +29,10 @@ import java.util.Map;
 import android.location.Location;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.tasks.OnSuccessListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import android.widget.TextView;
 
 public class AddInfoActivity extends AppCompatActivity {
     private EditText etCrop, etCropStage;
@@ -31,6 +40,7 @@ public class AddInfoActivity extends AppCompatActivity {
     private Button btnUploadImage, btnSubmit;
     private Uri imageUri;
     private String imageBase64 = "";
+    private TextView tvDateTime;
 
     private static final int PICK_IMAGE_REQUEST = 1;
     private static final int CAMERA_REQUEST_CODE = 2;
@@ -47,6 +57,13 @@ public class AddInfoActivity extends AppCompatActivity {
         imagePreview = findViewById(R.id.imagePreview);
         btnUploadImage = findViewById(R.id.btnUploadImage);
         btnSubmit = findViewById(R.id.btnSubmit);
+        // Find the TextView where you want to show the date and time
+        tvDateTime = findViewById(R.id.tvDateTime);
+        // Get current date and time
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z", Locale.getDefault());
+        String currentDateAndTime = sdf.format(new Date());
+        // Set the current date and time to the TextView
+        tvDateTime.setText(currentDateAndTime);
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         // Get current location
@@ -66,6 +83,11 @@ public class AddInfoActivity extends AppCompatActivity {
                 }, 100);
             }
         }
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setIcon(resizeLogo(R.drawable.logo, 0, 0));
+        }
         // Get coordinates from MainActivity
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
@@ -84,6 +106,13 @@ public class AddInfoActivity extends AppCompatActivity {
                 saveDataToFirestore();
             }
         });
+    }
+    private Drawable resizeLogo(int drawableId, int width, int height) {
+        Drawable drawable = ContextCompat.getDrawable(this, drawableId);
+        if (drawable != null) {
+            drawable.setBounds(0, 0, width, height);
+        }
+        return drawable;
     }
     private void getCurrentLocation() {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -122,12 +151,14 @@ public class AddInfoActivity extends AppCompatActivity {
                 Uri imageUri = data.getData();
                 convertImageToBase64(imageUri);
                 imagePreview.setImageURI(imageUri); // Update ImageView
+                imagePreview.setVisibility(View.VISIBLE); // Show the image preview
             } else {
                 // Camera Image
                 Bitmap photo = (Bitmap) data.getExtras().get("data");
                 if (photo != null) {
                     convertBitmapToBase64(photo);
                     imagePreview.setImageBitmap(photo); // Update ImageView
+                    imagePreview.setVisibility(View.VISIBLE); // Show the image preview
                 } else {
                     Toast.makeText(this, "Failed to capture image", Toast.LENGTH_SHORT).show();
                 }
@@ -160,19 +191,26 @@ public class AddInfoActivity extends AppCompatActivity {
     private void saveDataToFirestore() {
         String crop = etCrop.getText().toString().trim();
         String cropStage = etCropStage.getText().toString().trim();
+        String DateandTime = tvDateTime.getText().toString().trim();
         if (crop.isEmpty() || cropStage.isEmpty() || imageBase64.isEmpty()) {
             Toast.makeText(this, "Please fill all fields and upload an image", Toast.LENGTH_SHORT).show();
             return;
         }
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         Map<String, Object> data = new HashMap<>();
-        data.put("latitude", latitude);
-        data.put("longitude", longitude);
-        data.put("crop", crop);
-        data.put("cropStage", cropStage);
-        data.put("photo", imageBase64);
+        data.put("Latitude", latitude);
+        data.put("Longitude", longitude);
+        data.put("Crop", crop);
+        data.put("Crop Stage", cropStage);
+        data.put("Photo", imageBase64);
+        data.put("Date & Time", DateandTime);
         db.collection("crop_data").add(data)
-                .addOnSuccessListener(documentReference -> Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(AddInfoActivity.this, MainActivity.class); // Replace NewActivity with your target activity
+                    startActivity(intent);
+                    finish(); // Optional: to close the current activity
+                })
                 .addOnFailureListener(e -> Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show());
     }
 }
