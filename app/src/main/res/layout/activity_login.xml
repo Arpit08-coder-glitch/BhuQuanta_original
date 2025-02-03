@@ -37,7 +37,9 @@
         android:background="@drawable/edittext_border"
         android:hint="Email Address"
         android:inputType="textEmailAddress"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_email"
+        android:drawablePadding="10dp"/>
 
     <!-- Password EditText -->
     <EditText
@@ -48,7 +50,9 @@
         android:background="@drawable/edittext_border"
         android:hint="Password"
         android:inputType="textPassword"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_lock"
+        android:drawablePadding="10dp"/>
 
     <!-- Forgot Password Button -->
     <Button
