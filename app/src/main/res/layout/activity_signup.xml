@@ -31,7 +31,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="20dp" />
 
-    <!-- Full Name Input -->
+    <!-- Full Name Input with Icon -->
     <EditText
         android:id="@+id/namebox"
         android:layout_width="match_parent"
@@ -39,9 +39,11 @@
         android:background="@drawable/edittext_border"
         android:hint="Full Name"
         android:inputType="textPersonName"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_person"
+    android:drawablePadding="10dp" />
 
-    <!-- Email Address Input -->
+    <!-- Email Address Input with Icon -->
     <EditText
         android:id="@+id/emailBox"
         android:layout_width="match_parent"
@@ -50,9 +52,11 @@
         android:background="@drawable/edittext_border"
         android:hint="Email Address"
         android:inputType="textEmailAddress"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_email"
+    android:drawablePadding="10dp" />
 
-    <!-- Phone Number Input -->
+    <!-- Phone Number Input with Icon -->
     <EditText
         android:id="@+id/phoneBox"
         android:layout_width="match_parent"
@@ -61,9 +65,11 @@
         android:background="@drawable/edittext_border"
         android:hint="Phone Number"
         android:inputType="phone"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_phone"
+    android:drawablePadding="10dp" />
 
-    <!-- Create Password Input -->
+    <!-- Create Password Input with Icon -->
     <EditText
         android:id="@+id/passwordBox"
         android:layout_width="match_parent"
@@ -72,7 +78,9 @@
         android:background="@drawable/edittext_border"
         android:hint="Create Password"
         android:inputType="textPassword"
-        android:padding="10dp" />
+        android:padding="10dp"
+        android:drawableStart="@drawable/ic_lock"
+    android:drawablePadding="10dp" />
 
     <!-- Sign Up Button -->
     <Button

@@ -15,7 +15,6 @@
         app:layout_constraintTop_toTopOf="parent"
         android:background="#ffffff"
         >
-
     <TextView
         android:id="@+id/about_us"
         android:layout_width="match_parent"
