@@ -20,6 +20,7 @@
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#363A96"
+            android:layout_marginTop="30dp"
             android:gravity="center"
             android:layout_marginBottom="20dp" />
 
@@ -30,7 +31,7 @@
             android:layout_height="wrap_content"
             android:text="Current Date and Time"
             android:textSize="16sp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="40dp"
             android:background="#f1f1f1"
             android:padding="10dp"
             android:drawableStart="@drawable/ic_calendar"
