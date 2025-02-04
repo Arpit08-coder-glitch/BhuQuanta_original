@@ -13,6 +13,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
+            z-index:0;
         }
         .dropdown-panel {
             position: fixed;
@@ -24,7 +25,7 @@
             box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.2);
             padding: 20px;
             transition: bottom 0.3s ease;
-            z-index: 500;
+            z-index: 1;
             opacity:0.9;
         }
         .dropdown-panel.show {
@@ -43,7 +44,7 @@
             height: 50px;
             font-size: 24px;
             cursor: pointer;
-            z-index: 600;
+            z-index: 2;
         }
         .dropdown-panel select {
             width: 100%;
@@ -206,27 +207,31 @@ addCurrentLocationMarker(map);
 // Define different base layers
 const osmLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
- attribution: ' ',
+ attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
 
 const googleSatelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
+ attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
 
 const hybridLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
+ attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
 
 const terrainLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
+ attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
 
 const trafficLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m,traffic&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
+ attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
 
@@ -234,14 +239,12 @@ const trafficLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m,traffic&hl=en&
 const wmsLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
  layers: 'ne:amravati', // WMS layer name
  format: 'image/png',
- transparent: true,
- attribution: "© QuantaSIP"
+ transparent: true
 }).addTo(map);
 const wmsLayer1 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
  layers: 'ne:yavatmal', // WMS layer name
  format: 'image/png',
- transparent: true,
- attribution: "© QuantaSIP"
+ transparent: true
 }).addTo(map);
 
 wmsLayer.getContainer().style.zIndex = '400'; // Ensure WMS layer is above background layers
@@ -544,12 +547,12 @@ const propertiesToShow = [
 ];
 
 // Build the table HTML for the popup
-let tableHtml = `<table class="popup-table"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
+let tableHtml = `<table class="popup-table"><thead></thead><tbody>`;
 
 // Loop through the propertiesToShow and create the table rows
 propertiesToShow.forEach(property => {
    const value = propertiesAmravati[property.name] || 'N/A';  // Default to 'N/A' if property is not found
-   tableHtml += `<tr><td>${property.header}</td><td>${value}</td></tr>`;
+   tableHtml += `<tr><td><strong>${property.header}</strong></td><td>${value}</td></tr>`;
 });
 
 tableHtml += `</tbody></table>`;
