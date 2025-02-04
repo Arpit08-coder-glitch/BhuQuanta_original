@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demonstration</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         #map {
@@ -142,6 +143,24 @@
     align-items: center;
     height: 20px;
 }
+        #navigateBtn {
+    position: absolute;
+    top: 13%;
+    left: 10px;
+    z-index: 1000; /* Ensure it's above the map */
+    background-color: #007bff; /* Blue color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    width: 50px;
+            height: 50px;
+}
+
+#navigateBtn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
 
     </style>
 </head>
@@ -163,17 +182,20 @@
     <button id="search-btn" class="search-button">Search</button>
 </div>
 <button class="toggle-button" onclick="toggleDropdown()"><i class="fas fa-chevron-up"></i></button>
+<button id="navigateBtn">
+    <i class="fas fa-location-arrow"></i>
+</button>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
 <script>
     // Initialize the map
     const map = L.map('map').setView([20.5937, 78.9629], 5); // Centered near San Francisco for the lake layer
     // Function to add marker at user's current location
 function addCurrentLocationMarker(map) {
     if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
         return;
     }
-
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
@@ -195,7 +217,6 @@ function addCurrentLocationMarker(map) {
         },
         (error) => {
             console.error("Error getting location:", error);
-            alert("Unable to retrieve your location.");
         }
     );
 }
@@ -445,7 +466,6 @@ document.getElementById('search-btn').addEventListener('click', async function (
    }
 
    if (!district || !tehsil || !village) {
-       alert('Please select district, tehsil, and village.');
        return;
    }
 
@@ -494,7 +514,7 @@ document.getElementById('search-btn').addEventListener('click', async function (
            // Store the current polygon group for future removal
            currentPolygonGroup = polygonGroup;
        } else {
-           alert('No features found for the selected district, tehsil, and village.');
+           console.log('No features found for the selected district, tehsil, and village.');
        }
    } catch (error) {
        console.error('Error fetching feature info:', error);
@@ -531,8 +551,11 @@ map.on('click', async (e) => {
 const propertiesAmravati = featureAmravati.properties;
 const featureIdAmravati = featureAmravati.id;
 
+
 // List of properties to show with their headers
 const propertiesToShow = [
+{ name: 'clicked_lat', header: 'Latitude' },
+{ name: 'clicked_lng', header: 'Longitude' },
    { name: 'state', header: 'State' },
    { name: 'state_code', header: 'State Code' },
    { name: 'district', header: 'District' },
@@ -543,7 +566,7 @@ const propertiesToShow = [
    { name: 'lgd_code', header: 'LGD' },
    { name: 'khasra_no', header: 'Khasra No' },
    { name: 'area_ac', header: 'Area (Ac)' },
-   { name: 'lu_lc', header: 'LU/LC' }
+   { name: 'lu_lc', header: 'LU/LC' },
 ];
 
 // Build the table HTML for the popup
@@ -551,7 +574,14 @@ let tableHtml = `<table class="popup-table"><thead></thead><tbody>`;
 
 // Loop through the propertiesToShow and create the table rows
 propertiesToShow.forEach(property => {
-   const value = propertiesAmravati[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+    let value;
+   if (property.name === 'clicked_lat') {
+       value = lat.toFixed(6);  // Use the clicked latitude
+   } else if (property.name === 'clicked_lng') {
+       value = lng.toFixed(6);  // Use the clicked longitude
+   } else {
+       value = propertiesAmravati[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+   }
    tableHtml += `<tr><td><strong>${property.header}</strong></td><td>${value}</td></tr>`;
 });
 
@@ -589,6 +619,8 @@ map.fitBounds(currentPolygonLayerAmravati.getBounds());
                const featureIdAkola = featureAkola.id;
                // List of properties to show with their headers
 const propertiesToShow = [
+{ name: 'clicked_lat', header: 'Latitude' },
+{ name: 'clicked_lng', header: 'Longitude' },
    { name: 'state', header: 'State' },
    { name: 'state_code', header: 'State Code' },
    { name: 'district', header: 'District' },
@@ -601,12 +633,18 @@ const propertiesToShow = [
    { name: 'area_ac', header: 'Area (Ac)' },
    { name: 'lu_lc', header: 'LU/LC' }
 ];
-
                // Build the table HTML for the popup
-               let tableHtml = `<table class="popup-table"><thead><tr><th>Property</th><th>Value</th></tr></thead><tbody>`;
+               let tableHtml = `<table class="popup-table"><thead></thead><tbody>`;
                  propertiesToShow.forEach(property => {
-   const value = propertiesAkola[property.name] || 'N/A';  // Default to 'N/A' if property is not found
-   tableHtml += `<tr><td>${property.header}</td><td>${value}</td></tr>`;
+                    let value;
+   if (property.name === 'clicked_lat') {
+       value = lat.toFixed(6);  // Use the clicked latitude
+   } else if (property.name === 'clicked_lng') {
+       value = lng.toFixed(6);  // Use the clicked longitude
+   } else {
+       value = propertiesAkola[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+   }
+   tableHtml += `<tr><td><strong>${property.header}</strong></td><td>${value}</td></tr>`;
 });
                tableHtml += `</tbody></table>`;
 
@@ -634,6 +672,110 @@ const propertiesToShow = [
        console.error('Error fetching feature info:', error);
    }
 });
+document.getElementById("navigateBtn").addEventListener("click", function () {
+    if ( !currentPolygonLayerAmravati && !currentPolygonLayerAkola) {
+        alert("Please Select A Destination.");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(function (position) {
+        let userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+        console.log("User Location:", userLatLng);
+
+        let geoJsonLayers = [];
+
+        if (currentPolygonLayerAmravati) geoJsonLayers.push(currentPolygonLayerAmravati);
+        if (currentPolygonLayerAkola) geoJsonLayers.push(currentPolygonLayerAkola);
+
+        if (geoJsonLayers.length === 0) {
+            alert("Please select A Destination.");
+            return;
+        }
+
+        let nearestPoint = findNearestPolygon(userLatLng, geoJsonLayers);
+        console.log(nearestPoint);
+        if (nearestPoint) {
+            drawShortestRoute(userLatLng, nearestPoint);
+        } else {
+            alert("No valid nearest point found.");
+        }
+    });
+});
+function findNearestPolygon(userLatLng, geoJsonLayers) {
+    let minDistance = Infinity;
+    let nearestCentroid = null;
+
+    geoJsonLayers.forEach((layer, index) => {
+        console.log(`Checking layer ${index}:`, layer);
+
+        if (layer) {
+            layer.eachLayer(function (polygon) {
+                if (polygon instanceof L.Polygon) {
+                    console.log("Polygon found:", polygon);
+                    let latlngs = polygon.getLatLngs();
+
+                    // Flatten array in case of MultiPolygon
+                    latlngs = latlngs.flat(2);
+
+                    console.log("Extracted Polygon Coordinates:", latlngs);
+
+                    // Compute centroid
+                    let centroid = computeCentroid(latlngs);
+
+                    if (centroid) {
+                        let distance = userLatLng.distanceTo(centroid);
+                        console.log(`Distance to centroid (${centroid.lat}, ${centroid.lng}):`, distance);
+
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestCentroid = centroid;
+                        }
+                    }
+                } else {
+                    console.log("Skipping non-polygon layer:", polygon);
+                }
+            });
+        } else {
+            console.log("Skipping null layer.");
+        }
+    });
+
+    console.log("Nearest centroid found:", nearestCentroid);
+    return nearestCentroid;
+}
+function drawShortestRoute(start, end) {
+    if (typeof L.Routing === "undefined") {
+        console.error("Leaflet Routing Machine is not loaded.");
+        return;
+    }
+
+    // Remove existing route
+    if (window.routingControl) {
+        map.removeControl(window.routingControl);
+    }
+
+    // Create new route with no markers and no text instructions
+    window.routingControl = L.Routing.control({
+        waypoints: [start, end],
+        routeWhileDragging: true,
+        createMarker: function () { return null; }, // No markers at start/end
+        show: false, // Hide instructions
+        lineOptions: {
+            styles: [{ color: 'blue', weight: 5, opacity: 0.7 }]
+        }
+    }).addTo(map);
+}
+function computeCentroid(latlngs) {
+    let sumLat = 0, sumLng = 0, count = latlngs.length;
+
+    if (count === 0) return null;
+
+    latlngs.forEach(point => {
+        sumLat += point.lat;
+        sumLng += point.lng;
+    });
+
+    return L.latLng(sumLat / count, sumLng / count);
+}
 </script>
 </body>
 </html>
