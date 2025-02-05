@@ -28,9 +28,9 @@
         <!-- Button at Top Right -->
         <Button
             android:id="@+id/btnAddInfo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ADD Information"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:text="+"
             android:backgroundTint="@color/material_dynamic_primary10"
             android:textColor="@android:color/white"
             android:layout_alignParentTop="true"
