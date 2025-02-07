@@ -168,14 +168,14 @@
 <div id="map"></div>
 
 <div id="dropdown-panel" class="dropdown-panel">
-    <select id="district">
+    <label for="district"></label><select id="district">
         <option>Select District</option>
     </select>
-    <select id="tehsil">
+    <label for="tehsil"></label><select id="tehsil">
         <option>Select Tehsil</option>
     </select>
     <div id="tehsil-progress" class="progress-bar"></div>
-    <select id="village">
+    <label for="village"></label><select id="village">
         <option>Select Village</option>
     </select>
     <div id="village-progress" class="progress-bar"></div>
@@ -192,41 +192,45 @@
     // Initialize the map
     const map = L.map('map').setView([20.5937, 78.9629], 5); // Centered near San Francisco for the lake layer
     // Function to add marker at user's current location
+let currentMarker = null;
+let isNavigating = false; // Flag to track navigation status
+
 function addCurrentLocationMarker(map) {
     if (!navigator.geolocation) {
         console.error("Geolocation is not supported by this browser.");
         return;
     }
 
-    let currentMarker = null;
-    let firstUpdate = true; // Flag to track if it's the first update
+    let firstUpdate = true;
 
     function updateLocation() {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
 
-                // Define a custom icon using FontAwesome
+                // Choose the appropriate icon
                 const locationIcon = L.divIcon({
                     className: 'custom-fa-icon',
-                    html: '<i class="fas fa-map-marker-alt"></i>',
-                    iconSize: [30, 30], // Size of the icon
-                    iconAnchor: [15, 30] // Anchor to the bottom center
+                    html: isNavigating
+                        ? '<i class="fas fa-location-arrow" style="color: blue;"></i>'  // New icon for navigation
+                        : '<i class="fas fa-map-marker-alt" style="color: red;"></i>', // Default icon
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30]
                 });
 
-                // Remove the old marker if it exists
+                // Remove the old marker
                 if (currentMarker) {
                     map.removeLayer(currentMarker);
                 }
 
-                // Add the new marker to the map
+                // Add the new marker
                 currentMarker = L.marker([latitude, longitude], { icon: locationIcon })
                     .addTo(map);
 
-                // Set the map view only on the first update
+                // Set the view only on the first update
                 if (firstUpdate) {
                     map.setView([latitude, longitude], 15);
-                    firstUpdate = false; // Update flag to prevent further zooming
+                    firstUpdate = false;
                 }
             },
             (error) => {
@@ -239,6 +243,7 @@ function addCurrentLocationMarker(map) {
     updateLocation();
     setInterval(updateLocation, 1000);
 }
+
 // Call this function after initializing the Leaflet map
 addCurrentLocationMarker(map);
 
@@ -272,21 +277,6 @@ const trafficLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m,traffic&hl=en&
  attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
-
-// Add WMS layer from GeoServer with higher z-index
-const wmsLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
- layers: 'ne:amravati', // WMS layer name
- format: 'image/png',
- transparent: true
-}).addTo(map);
-const wmsLayer1 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
- layers: 'ne:yavatmal', // WMS layer name
- format: 'image/png',
- transparent: true
-}).addTo(map);
-
-wmsLayer.getContainer().style.zIndex = '400'; // Ensure WMS layer is above background layers
-wmsLayer1.getContainer().style.zIndex = '400'; // Ensure WMS layer is above background layers
 
 // Add base layers control to the map
 const baseLayers = {
@@ -467,97 +457,105 @@ populateSelectOptions();
 let currentPolygonGroup = null;  // Variable to keep track of the current polygon group
 let currentPolygonLayerAmravati = null; // Variable for Amravati polygon layer
 let currentPolygonLayerAkola = null;    // Variable for Yavatmal polygon layer
+// Variable to track the current WMS layer
+let currentWMSLayer = null;
 // Function to handle search button click
 document.getElementById('search-btn').addEventListener('click', async function () {
-   const district = document.getElementById('district').value;
-   const tehsil = document.getElementById('tehsil').value;
-   const village = document.getElementById('village').value;
-   // Remove current polygon layers (if any) when search button is clicked
-   if (currentPolygonLayerAmravati) {
-       map.removeLayer(currentPolygonLayerAmravati);
-       currentPolygonLayerAmravati = null;
-   }
-   if (currentPolygonLayerAkola) {
-       map.removeLayer(currentPolygonLayerAkola);
-       currentPolygonLayerAkola = null;
-   }
+    const district = document.getElementById('district').value;
+    const tehsil = document.getElementById('tehsil').value;
+    const village = document.getElementById('village').value;
 
-   if (!district || !tehsil || !village) {
-       return;
-   }
+    // Remove current polygon layers (if any) when search button is clicked
+    if (currentPolygonLayerAmravati) {
+        map.removeLayer(currentPolygonLayerAmravati);
+        currentPolygonLayerAmravati = null;
+    }
+    if (currentPolygonLayerAkola) {
+        map.removeLayer(currentPolygonLayerAkola);
+        currentPolygonLayerAkola = null;
+    }
 
-   // Escape single quotes in village name for CQL filter
-   const escapedVillage = village.replace(/'/g, "''");
+    // Remove the previous WMS layer before adding a new one
+    if (currentWMSLayer) {
+        map.removeLayer(currentWMSLayer);
+        currentWMSLayer = null;
+    }
 
-   // Construct the GetFeatureInfo URL based on selected values
-   const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
+    if (!district || !tehsil || !village) {
+        return;
+    }
 
-   // Proxy URL
-   const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+    // Escape single quotes in village name for CQL filter
+    const escapedVillage = village.replace(/'/g, "''");
 
-   try {
-       const response = await fetch(url);
-       const data = await response.json();
+    // Construct the GetFeatureInfo URL based on selected values
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
 
-       if (data.features && data.features.length > 0) {
-           // Remove the previous polygon group if it exists
-           if (currentPolygonGroup) {
-               map.removeLayer(currentPolygonGroup);
-               currentPolygonGroup = null;
-           }
+    // Proxy URL
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
-           // Create a new group to hold all the polygon layers
-           let polygonGroup = L.layerGroup();
-           let bounds = L.latLngBounds();  // Initialize an empty bounds object
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-           // Filter all features that match the district, tehsil, and village
-           const matchingFeatures = data.features.filter((feature) => {
-               const properties = feature.properties;
-               return properties.district === district && properties.tehsil === tehsil && properties.village === village;
-           });
+        if (data.features && data.features.length > 0) {
+            // Remove the previous polygon group if it exists
+            if (currentPolygonGroup) {
+                map.removeLayer(currentPolygonGroup);
+                currentPolygonGroup = null;
+            }
 
-           // Add each matching feature to the map
-           matchingFeatures.forEach((feature) => {
-               const polygonLayer = L.geoJSON(feature.geometry);
-               polygonGroup.addLayer(polygonLayer);
+            // Create a new group to hold all the polygon layers
+            let polygonGroup = L.layerGroup();
+            let bounds = L.latLngBounds();  // Initialize an empty bounds object
 
-               // Extend the bounds to include this polygon's bounds
-               bounds.extend(polygonLayer.getBounds());
-           });
-           // Add the new polygon group to the map
-           polygonGroup.addTo(map);
-           // Zoom to the bounds of all the polygons
-           map.fitBounds(bounds);
-           // Store the current polygon group for future removal
-           currentPolygonGroup = polygonGroup;
-       } else {
-           console.log('No features found for the selected district, tehsil, and village.');
-       }
-   } catch (error) {
-       console.error('Error fetching feature info:', error);
-   }
-});
-// Handle map click to remove current polygon group
+            // Filter all features that match the district, tehsil, and village
+            const matchingFeatures = data.features.filter((feature) => {
+                const properties = feature.properties;
+                return properties.district === district && properties.tehsil === tehsil && properties.village === village;
+            });
+
+            // Add each matching feature to the map
+            matchingFeatures.forEach((feature) => {
+                const polygonLayer = L.geoJSON(feature.geometry);
+                polygonGroup.addLayer(polygonLayer);
+
+                // Extend the bounds to include this polygon's bounds
+                bounds.extend(polygonLayer.getBounds());
+            });
+            // Zoom to the bounds of all the polygons
+            map.fitBounds(bounds);
+            // Store the current polygon group for future removal
+            currentPolygonGroup = polygonGroup;
+            // Add WMS layer for the selected district
+            currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+                layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
+                format: 'image/png',
+                transparent: true,
+                CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village
+            }).addTo(map);
+
+            // Set WMS layer zIndex to ensure it appears above base layers
+            currentWMSLayer.setZIndex(400);
+        } else {
+            console.log('No features found for the selected district, tehsil, and village.');
+        }
+    } catch (error) {
+        console.error('Error fetching feature info:', error);
+    }
+    // Handle map click to remove current polygon group
 map.on('click', async (e) => {
    // Remove current polygon group if it exists
    if (currentPolygonGroup) {
        map.removeLayer(currentPolygonGroup);
        currentPolygonGroup = null;
    }
-
    const { lat, lng } = e.latlng;
 
-   // Construct the GeoServer GetFeatureInfo URL for Amravati layer
-   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:amravati&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
-
-   // Construct the GeoServer GetFeatureInfo URL for Yavatmal layer
-   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:yavatmal&query_layers=ne:yavatmal&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
-
    // Proxy URL for both Amravati and Yavatmal layers
-   const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
-   const urlAkola = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAkola)}`;
+   const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
    try {
-       const [responseAmravati, responseAkola] = await Promise.all([fetch(urlAmravati), fetch(urlAkola)]);
+       const [responseAmravati] = await Promise.all([fetch(urlAmravati)]);
 
        // Handle the Amravati response
        if (responseAmravati.ok) {
@@ -625,69 +623,10 @@ map.fitBounds(currentPolygonLayerAmravati.getBounds());
        } else {
            console.error('Error: Could not retrieve Amravati feature information');
        }
-
-       // Handle the Yavatmal response
-       if (responseAkola.ok) {
-           const dataAkola = await responseAkola.json();
-
-           if (dataAkola.features && dataAkola.features.length > 0) {
-               const featureAkola = dataAkola.features[0];
-               const propertiesAkola = featureAkola.properties;
-               const featureIdAkola = featureAkola.id;
-               // List of properties to show with their headers
-const propertiesToShow = [
-{ name: 'clicked_lat', header: 'Latitude' },
-{ name: 'clicked_lng', header: 'Longitude' },
-   { name: 'state', header: 'State' },
-   { name: 'state_code', header: 'State Code' },
-   { name: 'district', header: 'District' },
-   { name: 'distt_code', header: 'District Code' },
-   { name: 'tehsil', header: 'Tehsil' },
-   { name: 'teh_code', header: 'Tehsil Code' },
-   { name: 'village', header: 'Village' },
-   { name: 'lgd_code', header: 'LGD' },
-   { name: 'khasra_no', header: 'Khasra No' },
-   { name: 'area_ac', header: 'Area (Ac)' },
-   { name: 'lu_lc', header: 'LU/LC' }
-];
-               // Build the table HTML for the popup
-               let tableHtml = `<table class="popup-table"><thead></thead><tbody>`;
-                 propertiesToShow.forEach(property => {
-                    let value;
-   if (property.name === 'clicked_lat') {
-       value = lat.toFixed(6);  // Use the clicked latitude
-   } else if (property.name === 'clicked_lng') {
-       value = lng.toFixed(6);  // Use the clicked longitude
-   } else {
-       value = propertiesAkola[property.name] || 'N/A';  // Default to 'N/A' if property is not found
-   }
-   tableHtml += `<tr><td><strong>${property.header}</strong></td><td>${value}</td></tr>`;
-});
-               tableHtml += `</tbody></table>`;
-
-               // Remove the previous polygon layer for Yavatmal, if any
-               if (currentPolygonLayerAkola) {
-                   map.removeLayer(currentPolygonLayerAkola);
-                   currentPolygonLayerAkola = null;
-               }
-
-               // Create a new polygon layer for Yavatmal
-               currentPolygonLayerAkola = L.geoJSON(featureAkola.geometry, {
-                   onEachFeature: (feature, layer) => {
-                       // Add a popup with tabular data
-                       layer.bindPopup(tableHtml).openPopup();
-                   }
-               }).addTo(map);
-               // Zoom to the bounds of the new polygon layer
-               map.fitBounds(currentPolygonLayerAkola.getBounds());
-           }
-       } else {
-           console.error('Error: Could not retrieve Yavatmal feature information');
-       }
-
    } catch (error) {
        console.error('Error fetching feature info:', error);
    }
+});
 });
 document.getElementById("navigateBtn").addEventListener("click", function () {
     if ( !currentPolygonLayerAmravati && !currentPolygonLayerAkola) {
@@ -711,6 +650,7 @@ document.getElementById("navigateBtn").addEventListener("click", function () {
         let nearestPoint = findNearestPolygon(userLatLng, geoJsonLayers);
         console.log(nearestPoint);
         if (nearestPoint) {
+            isNavigating = true; // Set navigation mode
             drawShortestRoute(userLatLng, nearestPoint);
         } else {
             alert("No valid nearest point found.");
@@ -780,6 +720,11 @@ function drawShortestRoute(start, end) {
             styles: [{ color: 'blue', weight: 5, opacity: 0.7 }]
         }
     }).addTo(map);
+    routingControl.on("routesfound", function (e) {
+        let route = e.routes[0];
+        let bounds = L.latLngBounds(route.coordinates);
+        map.fitBounds(bounds);
+    });
 }
 function computeCentroid(latlngs) {
     let sumLat = 0, sumLng = 0, count = latlngs.length;
