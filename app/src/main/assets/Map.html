@@ -194,36 +194,53 @@
     // Function to add marker at user's current location
 function addCurrentLocationMarker(map) {
     if (!navigator.geolocation) {
+        console.error("Geolocation is not supported by this browser.");
         return;
     }
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const { latitude, longitude } = position.coords;
 
-            // Define a custom icon using FontAwesome
-            const locationIcon = L.divIcon({
-                className: 'custom-fa-icon',
-                html: '<i class="fas fa-map-marker-alt"></i>',
-                iconSize: [30, 30],  // Size of the icon
-                iconAnchor: [15, 30] // Anchor to the bottom center
-            });
+    let currentMarker = null;
+    let firstUpdate = true; // Flag to track if it's the first update
 
-            // Add the marker to the map
-            L.marker([latitude, longitude], { icon: locationIcon })
-                .addTo(map);
+    function updateLocation() {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
 
-            // Zoom to the user's location
-            map.setView([latitude, longitude], 15);
-        },
-        (error) => {
-            console.error("Error getting location:", error);
-        }
-    );
+                // Define a custom icon using FontAwesome
+                const locationIcon = L.divIcon({
+                    className: 'custom-fa-icon',
+                    html: '<i class="fas fa-map-marker-alt"></i>',
+                    iconSize: [30, 30], // Size of the icon
+                    iconAnchor: [15, 30] // Anchor to the bottom center
+                });
+
+                // Remove the old marker if it exists
+                if (currentMarker) {
+                    map.removeLayer(currentMarker);
+                }
+
+                // Add the new marker to the map
+                currentMarker = L.marker([latitude, longitude], { icon: locationIcon })
+                    .addTo(map);
+
+                // Set the map view only on the first update
+                if (firstUpdate) {
+                    map.setView([latitude, longitude], 15);
+                    firstUpdate = false; // Update flag to prevent further zooming
+                }
+            },
+            (error) => {
+                console.error("Error getting location:", error);
+            }
+        );
+    }
+
+    // Update location every second
+    updateLocation();
+    setInterval(updateLocation, 1000);
 }
-
 // Call this function after initializing the Leaflet map
 addCurrentLocationMarker(map);
-
 
 // Define different base layers
 const osmLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {

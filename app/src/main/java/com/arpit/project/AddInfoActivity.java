@@ -1,10 +1,13 @@
 package com.arpit.project;
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,11 +18,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import android.widget.TextView;
+import java.util.List;
 
 public class AddInfoActivity extends AppCompatActivity {
     private EditText etCrop, etCropStage;
@@ -64,6 +66,7 @@ public class AddInfoActivity extends AppCompatActivity {
         String currentDateAndTime = sdf.format(new Date());
         // Set the current date and time to the TextView
         tvDateTime.setText(currentDateAndTime);
+        syncLocalData();
         // Initialize FusedLocationProviderClient
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         // Get current location
@@ -192,25 +195,76 @@ public class AddInfoActivity extends AppCompatActivity {
         String crop = etCrop.getText().toString().trim();
         String cropStage = etCropStage.getText().toString().trim();
         String DateandTime = tvDateTime.getText().toString().trim();
+
         if (crop.isEmpty() || cropStage.isEmpty() || imageBase64.isEmpty()) {
             Toast.makeText(this, "Please fill all fields and upload an image", Toast.LENGTH_SHORT).show();
             return;
         }
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Map<String, Object> data = new HashMap<>();
-        data.put("Latitude", latitude);
-        data.put("Longitude", longitude);
-        data.put("Crop", crop);
-        data.put("Crop Stage", cropStage);
-        data.put("Photo", imageBase64);
-        data.put("Date & Time", DateandTime);
-        db.collection("crop_data").add(data)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(AddInfoActivity.this, MainActivity.class); // Replace NewActivity with your target activity
-                    startActivity(intent);
-                    finish(); // Optional: to close the current activity
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show());
+
+        if (isInternetAvailable()) {
+            // Upload to Firestore
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Map<String, Object> data = new HashMap<>();
+            data.put("Latitude", latitude);
+            data.put("Longitude", longitude);
+            data.put("Crop", crop);
+            data.put("Crop Stage", cropStage);
+            data.put("Photo", imageBase64);
+            data.put("Date & Time", DateandTime);
+
+            db.collection("crop_data").add(data)
+                    .addOnSuccessListener(documentReference -> {
+                        Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(AddInfoActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to save data", Toast.LENGTH_SHORT).show());
+        } else {
+            // Store in local database
+            AppDatabase database = AppDatabase.getInstance(this);
+            CropInfoDao cropInfoDao = database.cropInfoDao();
+            CropInfo cropInfo = new CropInfo(latitude, longitude, crop, cropStage, imageBase64, DateandTime);
+            cropInfoDao.insert(cropInfo);
+            Toast.makeText(this, "No Internet! Data saved locally.", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private boolean isInternetAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+        }
+        return false;
+    }
+    private void syncLocalData() {
+        if (isInternetAvailable()) {
+            AppDatabase database = AppDatabase.getInstance(this);
+            CropInfoDao cropInfoDao = database.cropInfoDao();
+            List<CropInfo> localData = cropInfoDao.getAllCropInfo();
+
+            if (!localData.isEmpty()) {
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                for (CropInfo data : localData) {
+                    Map<String, Object> firestoreData = new HashMap<>();
+                    firestoreData.put("Latitude", data.latitude);
+                    firestoreData.put("Longitude", data.longitude);
+                    firestoreData.put("Crop", data.crop);
+                    firestoreData.put("Crop Stage", data.cropStage);
+                    firestoreData.put("Photo", data.photo);
+                    firestoreData.put("Date & Time", data.dateTime);
+
+                    db.collection("crop_data").add(firestoreData)
+                            .addOnSuccessListener(documentReference -> {
+                                // Delete from local database after successful sync
+                                cropInfoDao.deleteById(data.id);
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed to sync data", Toast.LENGTH_SHORT).show();
+                            });
+                }
+                Toast.makeText(this, "Local data synced to Firestore!", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

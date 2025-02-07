@@ -16,6 +16,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -34,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private double latitude = 0.0, longitude = 0.0;
     private Handler handler = new Handler();
-    
     private Runnable resetDoubleBackFlag = new Runnable() {
         @Override
         public void run() {
@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         webView = findViewById(R.id.webView);
-        Button btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
+        ImageButton btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         // Request location updates
         requestLocationUpdates();
