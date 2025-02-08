@@ -171,14 +171,22 @@
     <label for="district"></label><select id="district">
         <option>Select District</option>
     </select>
+
     <label for="tehsil"></label><select id="tehsil">
         <option>Select Tehsil</option>
     </select>
     <div id="tehsil-progress" class="progress-bar"></div>
+
     <label for="village"></label><select id="village">
         <option>Select Village</option>
     </select>
     <div id="village-progress" class="progress-bar"></div>
+
+    <label for="khasra_no"></label><select id="khasra_no">
+        <option>Select Khasra Number</option>
+    </select>
+    <div id="khasra_no-progress" class="progress-bar"></div>
+
     <button id="search-btn" class="search-button">Search</button>
 </div>
 <button class="toggle-button" onclick="toggleDropdown()"><i class="fas fa-chevron-up"></i></button>
@@ -316,38 +324,37 @@ if (panel.classList.contains('show')) {
 }
 // Function to fetch feature info from WMS via a proxy and populate select options
 async function populateSelectOptions() {
-// Hardcode district names
-const districts = ['Amravati', 'Yavatmal'];
+    // Hardcode district names
+    const districts = ['Amravati', 'Yavatmal'];
 
-// Populate district select options
-populateSelect('district', districts);
+    // Populate district select options
+    populateSelect('district', districts);
 }
 
 // Function to populate a select element with options
 function populateSelect(selectId, options) {
-const select = document.getElementById(selectId);
-select.innerHTML = ''; // Clear existing options
-const defaultOption = document.createElement('option');
-defaultOption.textContent = `Select ${selectId.charAt(0).toUpperCase() + selectId.slice(1)}`;
-select.appendChild(defaultOption);
+    const select = document.getElementById(selectId);
+    select.innerHTML = ''; // Clear existing options
+    const defaultOption = document.createElement('option');
+    defaultOption.textContent = `Select ${selectId.charAt(0).toUpperCase() + selectId.slice(1)}`;
+    select.appendChild(defaultOption);
 
-options.forEach(option => {
-   const optionElement = document.createElement('option');
-   optionElement.value = option;
-   optionElement.textContent = option;
-   select.appendChild(optionElement);
-});
+    options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        select.appendChild(optionElement);
+    });
 }
+
 // Function to show progress bar
 function showProgressBar(selectId) {
-    const progressBar = document.getElementById(`${selectId}-progress`);
-    progressBar.style.display = 'block';
+    document.getElementById(`${selectId}-progress`).style.display = 'block';
 }
 
 // Function to hide progress bar
 function hideProgressBar(selectId) {
-    const progressBar = document.getElementById(`${selectId}-progress`);
-    progressBar.style.display = 'none';
+    document.getElementById(`${selectId}-progress`).style.display = 'none';
 }
 
 // Function to show error toast
@@ -356,43 +363,32 @@ function showErrorToast(message) {
     toast.className = 'toast';
     toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
+    setTimeout(() => toast.remove(), 3000);
 }
 
 // Function to fetch tehsils based on selected district
 async function fetchTehsils(district) {
     showProgressBar('tehsil');
-// Determine the layer based on the selected district
-const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
 
-const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
+    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
-// Proxy URL
-const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-console.log(url);
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
-try {
-   const response = await fetch(url);
-   const data = await response.json();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-   if (data.features && data.features.length > 0) {
-       const tehsils = new Set();
+        if (data.features && data.features.length > 0) {
+            const tehsils = new Set();
+            data.features.forEach(feature => tehsils.add(feature.properties.tehsil));
 
-       // Extract distinct tehsil values for the selected district
-       data.features.forEach((feature) => {
-           const properties = feature.properties;
-           tehsils.add(properties.tehsil);
-       });
-
-       // Populate tehsil select options
-       populateSelect('tehsil', Array.from(tehsils));
-   }
-} catch (error) {
-   console.error('Error fetching tehsils:', error);
-   showErrorToast('Error fetching tehsils.');
-} finally {
+            populateSelect('tehsil', Array.from(tehsils));
+        }
+    } catch (error) {
+        console.error('Error fetching tehsils:', error);
+        showErrorToast('Error fetching tehsils.');
+    } finally {
         hideProgressBar('tehsil');
     }
 }
@@ -400,60 +396,89 @@ try {
 // Function to fetch villages based on selected tehsil and district
 async function fetchVillages(district, tehsil) {
     showProgressBar('village');
-// Determine the layer based on the selected district
-const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
 
-const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
+    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
 
-// Proxy URL
-const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
-try {
-   const response = await fetch(url);
-   const data = await response.json();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-   if (data.features && data.features.length > 0) {
-       const villages = new Set();
+        if (data.features && data.features.length > 0) {
+            const villages = new Set();
+            data.features.forEach(feature => villages.add(feature.properties.village));
 
-       // Extract distinct village values for the selected tehsil
-       data.features.forEach((feature) => {
-           const properties = feature.properties;
-           villages.add(properties.village);
-       });
-
-       // Populate village select options
-       populateSelect('village', Array.from(villages));
-   }
-} catch (error) {
-   console.error('Error fetching villages:', error);
-   showErrorToast('Error fetching villages.');
+            populateSelect('village', Array.from(villages));
+        }
+    } catch (error) {
+        console.error('Error fetching villages:', error);
+        showErrorToast('Error fetching villages.');
     } finally {
         hideProgressBar('village');
     }
 }
 
-// Event listener for district selection
+// Function to fetch khasra numbers based on selected village, tehsil, and district
+async function fetchKhasras(district, tehsil, village) {
+    showProgressBar('khasra_no');
+
+    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}' AND village='${village}'`;
+
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.features && data.features.length > 0) {
+            const khasras = new Set();
+            data.features.forEach(feature => khasras.add(feature.properties.khasra_no));
+
+            populateSelect('khasra_no', Array.from(khasras));
+        }
+    } catch (error) {
+        console.error('Error fetching khasra numbers:', error);
+        showErrorToast('Error fetching khasra numbers.');
+    } finally {
+        hideProgressBar('khasra_no');
+    }
+}
+
+// Event listeners
 document.getElementById('district').addEventListener('change', function () {
-const selectedDistrict = this.value;
-if (selectedDistrict) {
-   fetchTehsils(selectedDistrict);
-   // Clear tehsil and village options when district changes
-   populateSelect('tehsil', []);
-   populateSelect('village', []);
-}
+    const district = this.value;
+    if (district) {
+        fetchTehsils(district);
+        populateSelect('tehsil', []);
+        populateSelect('village', []);
+        populateSelect('khasra_no', []);
+    }
 });
 
-// Event listener for tehsil selection
 document.getElementById('tehsil').addEventListener('change', function () {
-const selectedDistrict = document.getElementById('district').value;
-const selectedTehsil = this.value;
-if (selectedDistrict && selectedTehsil) {
-   fetchVillages(selectedDistrict, selectedTehsil);
-}
+    const district = document.getElementById('district').value;
+    const tehsil = this.value;
+    if (district && tehsil) {
+        fetchVillages(district, tehsil);
+        populateSelect('khasra_no', []);
+    }
 });
 
-// Call the function to populate the district dropdown when the page loads
+document.getElementById('village').addEventListener('change', function () {
+    const district = document.getElementById('district').value;
+    const tehsil = document.getElementById('tehsil').value;
+    const village = this.value;
+    if (district && tehsil && village) {
+        fetchKhasras(district, tehsil, village);
+    }
+});
+
+// Call function to populate district dropdown when page loads
 populateSelectOptions();
+
 let currentPolygonGroup = null;  // Variable to keep track of the current polygon group
 let currentPolygonLayerAmravati = null; // Variable for Amravati polygon layer
 let currentPolygonLayerAkola = null;    // Variable for Yavatmal polygon layer
@@ -464,6 +489,7 @@ document.getElementById('search-btn').addEventListener('click', async function (
     const district = document.getElementById('district').value;
     const tehsil = document.getElementById('tehsil').value;
     const village = document.getElementById('village').value;
+    const khasraNo = document.getElementById('khasra_no').value; // Get Khasra Number
 
     // Remove current polygon layers (if any) when search button is clicked
     if (currentPolygonLayerAmravati) {
@@ -481,15 +507,16 @@ document.getElementById('search-btn').addEventListener('click', async function (
         currentWMSLayer = null;
     }
 
-    if (!district || !tehsil || !village) {
+    if (!district || !tehsil || !village || !khasraNo) {
         return;
     }
 
-    // Escape single quotes in village name for CQL filter
+    // Escape single quotes in village and khasra number for CQL filter
     const escapedVillage = village.replace(/'/g, "''");
+    const escapedKhasraNo = khasraNo.replace(/'/g, "''");
 
     // Construct the GetFeatureInfo URL based on selected values
-    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
 
     // Proxy URL
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -509,53 +536,67 @@ document.getElementById('search-btn').addEventListener('click', async function (
             let polygonGroup = L.layerGroup();
             let bounds = L.latLngBounds();  // Initialize an empty bounds object
 
-            // Filter all features that match the district, tehsil, and village
+            // Filter all features that match the district, tehsil, village, and khasra number
             const matchingFeatures = data.features.filter((feature) => {
                 const properties = feature.properties;
-                return properties.district === district && properties.tehsil === tehsil && properties.village === village;
+                return properties.district === district && properties.tehsil === tehsil && properties.village === village && properties.khasra_no === khasraNo;
             });
 
             // Add each matching feature to the map
             matchingFeatures.forEach((feature) => {
                 const polygonLayer = L.geoJSON(feature.geometry);
-                polygonGroup.addLayer(polygonLayer);
-
+                polygonGroup.addLayer(polygonLayer).addTo(map);
                 // Extend the bounds to include this polygon's bounds
                 bounds.extend(polygonLayer.getBounds());
             });
+
             // Zoom to the bounds of all the polygons
             map.fitBounds(bounds);
+
             // Store the current polygon group for future removal
             currentPolygonGroup = polygonGroup;
+
             // Add WMS layer for the selected district
             currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
                 layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
                 format: 'image/png',
                 transparent: true,
-                CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village
+                CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village and khasra number
             }).addTo(map);
 
             // Set WMS layer zIndex to ensure it appears above base layers
             currentWMSLayer.setZIndex(400);
         } else {
-            console.log('No features found for the selected district, tehsil, and village.');
+            console.log('No features found for the selected district, tehsil, village, and khasra number.');
         }
     } catch (error) {
         console.error('Error fetching feature info:', error);
     }
-    // Handle map click to remove current polygon group
+});
+// Handle map click to remove current polygon group
 map.on('click', async (e) => {
    // Remove current polygon group if it exists
+   if (!currentWMSLayer) {
+        console.log("No active WMS layer. Ignoring click.");
+        return;
+    }
    if (currentPolygonGroup) {
        map.removeLayer(currentPolygonGroup);
        currentPolygonGroup = null;
    }
+
    const { lat, lng } = e.latlng;
+   // Construct the GeoServer GetFeatureInfo URL for Amravati layer
+   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:amravati&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+
+   // Construct the GeoServer GetFeatureInfo URL for Yavatmal layer
+   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:yavatmal&query_layers=ne:yavatmal&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
 
    // Proxy URL for both Amravati and Yavatmal layers
-   const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+   const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
+   const urlAkola = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAkola)}`;
    try {
-       const [responseAmravati] = await Promise.all([fetch(urlAmravati)]);
+       const [responseAmravati, responseAkola] = await Promise.all([fetch(urlAmravati), fetch(urlAkola)]);
 
        // Handle the Amravati response
        if (responseAmravati.ok) {
@@ -623,10 +664,69 @@ map.fitBounds(currentPolygonLayerAmravati.getBounds());
        } else {
            console.error('Error: Could not retrieve Amravati feature information');
        }
+
+       // Handle the Yavatmal response
+       if (responseAkola.ok) {
+           const dataAkola = await responseAkola.json();
+
+           if (dataAkola.features && dataAkola.features.length > 0) {
+               const featureAkola = dataAkola.features[0];
+               const propertiesAkola = featureAkola.properties;
+               const featureIdAkola = featureAkola.id;
+               // List of properties to show with their headers
+const propertiesToShow = [
+{ name: 'clicked_lat', header: 'Latitude' },
+{ name: 'clicked_lng', header: 'Longitude' },
+   { name: 'state', header: 'State' },
+   { name: 'state_code', header: 'State Code' },
+   { name: 'district', header: 'District' },
+   { name: 'distt_code', header: 'District Code' },
+   { name: 'tehsil', header: 'Tehsil' },
+   { name: 'teh_code', header: 'Tehsil Code' },
+   { name: 'village', header: 'Village' },
+   { name: 'lgd_code', header: 'LGD' },
+   { name: 'khasra_no', header: 'Khasra No' },
+   { name: 'area_ac', header: 'Area (Ac)' },
+   { name: 'lu_lc', header: 'LU/LC' }
+];
+               // Build the table HTML for the popup
+               let tableHtml = `<table class="popup-table"><thead></thead><tbody>`;
+                 propertiesToShow.forEach(property => {
+                    let value;
+   if (property.name === 'clicked_lat') {
+       value = lat.toFixed(6);  // Use the clicked latitude
+   } else if (property.name === 'clicked_lng') {
+       value = lng.toFixed(6);  // Use the clicked longitude
+   } else {
+       value = propertiesAkola[property.name] || 'N/A';  // Default to 'N/A' if property is not found
+   }
+   tableHtml += `<tr><td><strong>${property.header}</strong></td><td>${value}</td></tr>`;
+});
+               tableHtml += `</tbody></table>`;
+
+               // Remove the previous polygon layer for Yavatmal, if any
+               if (currentPolygonLayerAkola) {
+                   map.removeLayer(currentPolygonLayerAkola);
+                   currentPolygonLayerAkola = null;
+               }
+
+               // Create a new polygon layer for Yavatmal
+               currentPolygonLayerAkola = L.geoJSON(featureAkola.geometry, {
+                   onEachFeature: (feature, layer) => {
+                       // Add a popup with tabular data
+                       layer.bindPopup(tableHtml).openPopup();
+                   }
+               }).addTo(map);
+               // Zoom to the bounds of the new polygon layer
+               map.fitBounds(currentPolygonLayerAkola.getBounds());
+           }
+       } else {
+           console.error('Error: Could not retrieve Yavatmal feature information');
+       }
+
    } catch (error) {
        console.error('Error fetching feature info:', error);
    }
-});
 });
 document.getElementById("navigateBtn").addEventListener("click", function () {
     if ( !currentPolygonLayerAmravati && !currentPolygonLayerAkola) {
