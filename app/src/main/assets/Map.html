@@ -169,22 +169,22 @@
 
 <div id="dropdown-panel" class="dropdown-panel">
     <label for="district"></label><select id="district">
-        <option>Select District</option>
-    </select>
+    <option>Select District</option>
+</select>
 
     <label for="tehsil"></label><select id="tehsil">
-        <option>Select Tehsil</option>
-    </select>
+    <option>Select Tehsil</option>
+</select>
     <div id="tehsil-progress" class="progress-bar"></div>
 
     <label for="village"></label><select id="village">
-        <option>Select Village</option>
-    </select>
+    <option>Select Village</option>
+</select>
     <div id="village-progress" class="progress-bar"></div>
 
     <label for="khasra_no"></label><select id="khasra_no">
-        <option>Select Khasra Number</option>
-    </select>
+    <option>Select Khasra Number</option>
+</select>
     <div id="khasra_no-progress" class="progress-bar"></div>
 
     <button id="search-btn" class="search-button">Search</button>
@@ -296,7 +296,7 @@ const baseLayers = {
 };
 
 // Default to OSM layer
-osmLayer.addTo(map);
+hybridLayer.addTo(map);
 
 L.control.layers(baseLayers, null, { position: 'bottomleft' }).addTo(map);
 
@@ -326,7 +326,6 @@ if (panel.classList.contains('show')) {
 async function populateSelectOptions() {
     // Hardcode district names
     const districts = ['Amravati', 'Yavatmal'];
-
     // Populate district select options
     populateSelect('district', districts);
 }
@@ -338,7 +337,6 @@ function populateSelect(selectId, options) {
     const defaultOption = document.createElement('option');
     defaultOption.textContent = `Select ${selectId.charAt(0).toUpperCase() + selectId.slice(1)}`;
     select.appendChild(defaultOption);
-
     options.forEach(option => {
         const optionElement = document.createElement('option');
         optionElement.value = option;
@@ -369,8 +367,7 @@ function showErrorToast(message) {
 // Function to fetch tehsils based on selected district
 async function fetchTehsils(district) {
     showProgressBar('tehsil');
-
-    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
+    const layer = district === 'Amravati' ? 'ne:Amravati_Tehsil_Update' : 'ne:Yavatmal_Tehsil_Update';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -397,7 +394,7 @@ async function fetchTehsils(district) {
 async function fetchVillages(district, tehsil) {
     showProgressBar('village');
 
-    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
+    const layer = district === 'Amravati' ? 'ne:Amravati_Villages' : 'ne:Yavatmal_Villages';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -471,18 +468,61 @@ document.getElementById('village').addEventListener('change', function () {
     const district = document.getElementById('district').value;
     const tehsil = document.getElementById('tehsil').value;
     const village = this.value;
+
     if (district && tehsil && village) {
         fetchKhasras(district, tehsil, village);
     }
+
+    // Add District Tehsil Layer
+
+    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}'`;
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+
+
+    // Fetch BBOX and Zoom to Layer
+    fetch(url)
+       .then(response => response.json())
+        .then(data => {
+            if (data.features.length > 0) {
+                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
+                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
+                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_Villages`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+
+    // Add Current WMS Layer
+    currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true,
+        CQL_FILTER: `district='${district}' AND tehsil='${tehsil}'` // Show only selected village and khasra number
+    }).addTo(map);
+
+    // Set zIndex to ensure it appears above base layers
+    districtLayer.setZIndex(400);
+    currentWMSLayer.setZIndex(400);
+    VillageLayer.setZIndex(400);
+
+                // Set the map view to the center of the district
+                map.setView(center, 12); // Adjust zoom as needed
+            }
+        })
+        .catch(error => console.error("Error fetching BBOX:", error));
 });
 
 // Call function to populate district dropdown when page loads
 populateSelectOptions();
 
-let currentPolygonGroup = null;  // Variable to keep track of the current polygon group
-let currentPolygonLayerAmravati = null; // Variable for Amravati polygon layer
-let currentPolygonLayerAkola = null;    // Variable for Yavatmal polygon layer
-// Variable to track the current WMS layer
+let currentPolygonGroup = null;
+let currentPolygonLayerAmravati = null;
+let currentPolygonLayerAkola = null;
 let currentWMSLayer = null;
 // Function to handle search button click
 document.getElementById('search-btn').addEventListener('click', async function () {
@@ -510,32 +550,26 @@ document.getElementById('search-btn').addEventListener('click', async function (
     if (!district || !tehsil || !village || !khasraNo) {
         return;
     }
-
     // Escape single quotes in village and khasra number for CQL filter
     const escapedVillage = village.replace(/'/g, "''");
     const escapedKhasraNo = khasraNo.replace(/'/g, "''");
 
     // Construct the GetFeatureInfo URL based on selected values
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
-
     // Proxy URL
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-
     try {
         const response = await fetch(url);
         const data = await response.json();
-
         if (data.features && data.features.length > 0) {
             // Remove the previous polygon group if it exists
             if (currentPolygonGroup) {
                 map.removeLayer(currentPolygonGroup);
                 currentPolygonGroup = null;
             }
-
             // Create a new group to hold all the polygon layers
             let polygonGroup = L.layerGroup();
             let bounds = L.latLngBounds();  // Initialize an empty bounds object
-
             // Filter all features that match the district, tehsil, village, and khasra number
             const matchingFeatures = data.features.filter((feature) => {
                 const properties = feature.properties;
@@ -545,16 +579,16 @@ document.getElementById('search-btn').addEventListener('click', async function (
             // Add each matching feature to the map
             matchingFeatures.forEach((feature) => {
                 const polygonLayer = L.geoJSON(feature.geometry);
-                polygonGroup.addLayer(polygonLayer).addTo(map);
+                polygonGroup.addLayer(polygonLayer);
                 // Extend the bounds to include this polygon's bounds
                 bounds.extend(polygonLayer.getBounds());
             });
 
             // Zoom to the bounds of all the polygons
             map.fitBounds(bounds);
-
             // Store the current polygon group for future removal
             currentPolygonGroup = polygonGroup;
+            currentPolygonGroup.addTo(map);
 
             // Add WMS layer for the selected district
             currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
@@ -563,7 +597,6 @@ document.getElementById('search-btn').addEventListener('click', async function (
                 transparent: true,
                 CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village and khasra number
             }).addTo(map);
-
             // Set WMS layer zIndex to ensure it appears above base layers
             currentWMSLayer.setZIndex(400);
         } else {
@@ -584,7 +617,6 @@ map.on('click', async (e) => {
        map.removeLayer(currentPolygonGroup);
        currentPolygonGroup = null;
    }
-
    const { lat, lng } = e.latlng;
    // Construct the GeoServer GetFeatureInfo URL for Amravati layer
    const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:amravati&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
@@ -729,7 +761,7 @@ const propertiesToShow = [
    }
 });
 document.getElementById("navigateBtn").addEventListener("click", function () {
-    if ( !currentPolygonLayerAmravati && !currentPolygonLayerAkola) {
+    if ( !currentPolygonLayerAmravati && !currentPolygonLayerAkola && !currentPolygonGroup) {
         alert("Please Select A Destination.");
         return;
     }
@@ -746,7 +778,6 @@ document.getElementById("navigateBtn").addEventListener("click", function () {
             alert("Please select A Destination.");
             return;
         }
-
         let nearestPoint = findNearestPolygon(userLatLng, geoJsonLayers);
         console.log(nearestPoint);
         if (nearestPoint) {
