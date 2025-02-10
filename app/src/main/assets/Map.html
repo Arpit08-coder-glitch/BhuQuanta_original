@@ -453,6 +453,37 @@ document.getElementById('district').addEventListener('change', function () {
         populateSelect('village', []);
         populateSelect('khasra_no', []);
     }
+     // Add District Tehsil Layer
+
+    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json`;
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+    // Fetch BBOX and Zoom to Layer
+    fetch(url)
+       .then(response => response.json())
+        .then(data => {
+            if (data.features.length > 0) {
+                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
+                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
+                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_District`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+
+    // Set zIndex to ensure it appears above base layers
+    districtLayer.setZIndex(400);
+    VillageLayer.setZIndex(400);
+
+                // Set the map view to the center of the district
+                map.setView(center, 12); // Adjust zoom as needed
+            }
+        })
+        .catch(error => console.error("Error fetching BBOX:", error));
 });
 
 document.getElementById('tehsil').addEventListener('change', function () {
@@ -462,6 +493,48 @@ document.getElementById('tehsil').addEventListener('change', function () {
         fetchVillages(district, tehsil);
         populateSelect('khasra_no', []);
     }
+     // Add District Tehsil Layer
+
+    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}'`;
+    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
+
+
+    // Fetch BBOX and Zoom to Layer
+    fetch(url)
+       .then(response => response.json())
+        .then(data => {
+            if (data.features.length > 0) {
+                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
+                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
+                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_District`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true
+    }).addTo(map);
+
+    // Add Current WMS Layer
+    currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+        layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
+        format: 'image/png',
+        transparent: true,
+        CQL_FILTER: `district='${district}'AND tehsil='${tehsil}'` // Show only selected village and khasra number
+    }).addTo(map);
+
+    // Set zIndex to ensure it appears above base layers
+    districtLayer.setZIndex(400);
+    currentWMSLayer.setZIndex(400);
+    VillageLayer.setZIndex(400);
+
+                // Set the map view to the center of the district
+                map.setView(center, 12); // Adjust zoom as needed
+            }
+        })
+        .catch(error => console.error("Error fetching BBOX:", error));
 });
 
 document.getElementById('village').addEventListener('change', function () {
@@ -475,7 +548,7 @@ document.getElementById('village').addEventListener('change', function () {
 
     // Add District Tehsil Layer
 
-    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}'`;
+    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
 
@@ -502,7 +575,7 @@ document.getElementById('village').addEventListener('change', function () {
         layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
         format: 'image/png',
         transparent: true,
-        CQL_FILTER: `district='${district}' AND tehsil='${tehsil}'` // Show only selected village and khasra number
+        CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village and khasra number
     }).addTo(map);
 
     // Set zIndex to ensure it appears above base layers
