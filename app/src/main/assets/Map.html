@@ -371,7 +371,6 @@ async function fetchTehsils(district) {
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-
     try {
         const response = await fetch(url);
         const data = await response.json();
@@ -443,6 +442,9 @@ async function fetchKhasras(district, tehsil, village) {
         hideProgressBar('khasra_no');
     }
 }
+let DistrictLayer;
+let TehsilLayer;
+let VillageLayer;
 
 // Event listeners
 document.getElementById('district').addEventListener('change', function () {
@@ -464,12 +466,12 @@ document.getElementById('district').addEventListener('change', function () {
             if (data.features.length > 0) {
                 const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
                 const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+                DistrictLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_District`, // Use district name as layer name
         format: 'image/png',
         transparent: true
     }).addTo(map);
-    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+    TehsilLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
         format: 'image/png',
         transparent: true
@@ -477,7 +479,7 @@ document.getElementById('district').addEventListener('change', function () {
 
     // Set zIndex to ensure it appears above base layers
     districtLayer.setZIndex(400);
-    VillageLayer.setZIndex(400);
+    TehsilLayer.setZIndex(400);
 
                 // Set the map view to the center of the district
                 map.setView(center, 12); // Adjust zoom as needed
@@ -506,17 +508,17 @@ document.getElementById('tehsil').addEventListener('change', function () {
             if (data.features.length > 0) {
                 const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
                 const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+                DistrictLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_District`, // Use district name as layer name
         format: 'image/png',
         transparent: true
     }).addTo(map);
-    const tehsilLayer= L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+    TehsilLayer= L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
         format: 'image/png',
         transparent: true
     }).addTo(map);
-    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+    VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_Villages`, // Use district name as layer name
         format: 'image/png',
         transparent: true
@@ -531,10 +533,10 @@ document.getElementById('tehsil').addEventListener('change', function () {
     }).addTo(map);
 
     // Set zIndex to ensure it appears above base layers
-    districtLayer.setZIndex(400);
+    DistrictLayer.setZIndex(400);
     currentWMSLayer.setZIndex(400);
     VillageLayer.setZIndex(400);
-    tehsilLayer.setZIndex(400);
+    TehsilLayer.setZIndex(400);
 
                 // Set the map view to the center of the district
                 map.setView(center, 12); // Adjust zoom as needed
@@ -565,17 +567,16 @@ document.getElementById('village').addEventListener('change', function () {
             if (data.features.length > 0) {
                 const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
                 const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                  const districtLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+                TehsilLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
         format: 'image/png',
         transparent: true
     }).addTo(map);
-    const VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+    VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district}_Villages`, // Use district name as layer name
         format: 'image/png',
         transparent: true
     }).addTo(map);
-
     // Add Current WMS Layer
     currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
         layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
@@ -585,7 +586,7 @@ document.getElementById('village').addEventListener('change', function () {
     }).addTo(map);
 
     // Set zIndex to ensure it appears above base layers
-    districtLayer.setZIndex(400);
+    TehsilLayer.setZIndex(400);
     currentWMSLayer.setZIndex(400);
     VillageLayer.setZIndex(400);
 
