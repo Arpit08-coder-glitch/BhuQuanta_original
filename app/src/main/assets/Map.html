@@ -167,7 +167,7 @@
             background-color: #ccc;
             border-radius: 50px;
             position: absolute;
-            top: 20%;
+            top: 10%;
             right: 2%;
             cursor: pointer;
             transition: background-color 0.3s;
@@ -194,13 +194,16 @@
         /* Text below the button */
         .toggle-text {
             margin-top: 50px; /* Space between button and text */
-            color: black;
+            color: #363A96;
             font-size: 14px;
             font-weight: bold;
+            background-color:white;
+            opacity: 0.8;
+            padding: 2px;
         }
         .toggle-btn-container {
             position: absolute;
-            top: 20%;
+            top: 10%;
             right: 2%;
             z-index: 1001;
             text-align: center;  /* Center the button and text */
@@ -213,7 +216,7 @@
     <!-- Toggle button to show/hide GeoJSON -->
     <div class="toggle-btn on" id="toggleGeoJSONBtn"></div>
     <!-- Text below the toggle button -->
-    <div class="toggle-text" id="toggleGeoJSONText">Show/Hide CHM</div>
+    <div class="toggle-text" id="toggleGeoJSONText"> Show/Hide CHM </div>
 </div>
 <div id="dropdown-panel" class="dropdown-panel">
     <label for="district"></label><select id="district">
