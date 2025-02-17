@@ -160,12 +160,61 @@
 #navigateBtn:hover {
     background-color: #0056b3; /* Darker blue on hover */
 }
+ /* Toggle button style */
+        .toggle-btn {
+            width: 60px;
+            height: 30px;
+            background-color: #ccc;
+            border-radius: 50px;
+            position: absolute;
+            top: 20%;
+            right: 2%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            z-index: 1001; /* Ensures the button is on top of the map */
+        }
 
+        .toggle-btn:before {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .toggle-btn.on {
+            background-color: #4CAF50;
+        }
+        .toggle-btn.on:before {
+            transform: translateX(30px);
+        }
+        /* Text below the button */
+        .toggle-text {
+            margin-top: 50px; /* Space between button and text */
+            color: black;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .toggle-btn-container {
+            position: absolute;
+            top: 20%;
+            right: 2%;
+            z-index: 1001;
+            text-align: center;  /* Center the button and text */
+        }
     </style>
 </head>
 <body>
 <div id="map"></div>
-
+<div class="toggle-btn-container">
+    <!-- Toggle button to show/hide GeoJSON -->
+    <div class="toggle-btn on" id="toggleGeoJSONBtn"></div>
+    <!-- Text below the toggle button -->
+    <div class="toggle-text" id="toggleGeoJSONText">Show/Hide CHM</div>
+</div>
 <div id="dropdown-panel" class="dropdown-panel">
     <label for="district"></label><select id="district">
     <option>Select District</option>
@@ -293,7 +342,28 @@ const baseLayers = {
 hybridLayer.addTo(map);
 
 L.control.layers(baseLayers, null, { position: 'bottomleft' }).addTo(map);
+// Initially, the layer is visible
+const geojsonLayer2 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
+                layers: `ne:CHM`, // Use district name as layer name
+                format: 'image/png',
+                transparent: true,
+            }).addTo(map);
+geojsonLayer2.setZIndex(400);
+var isLayerVisible = true;
 
+document.getElementById('toggleGeoJSONBtn').addEventListener('click', function() {
+    if (isLayerVisible) {
+        // Hide the layer
+        map.removeLayer(geojsonLayer2);
+        this.classList.remove('on'); // Remove the 'on' class for the toggle button
+    } else {
+        // Show the layer
+        geojsonLayer2.addTo(map);
+        this.classList.add('on'); // Remove the 'on' class for the toggle button
+    }
+    // Toggle the visibility state
+    isLayerVisible = !isLayerVisible;
+});
 // Variable to store the currently added feature layer
 let currentPolygonLayer = null;
 function toggleDropdown() {
