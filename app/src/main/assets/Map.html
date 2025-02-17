@@ -214,7 +214,6 @@ function addCurrentLocationMarker(map) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
-
                 // Choose the appropriate icon
                 const locationIcon = L.divIcon({
                     className: 'custom-fa-icon',
@@ -250,10 +249,8 @@ function addCurrentLocationMarker(map) {
     updateLocation();
     setInterval(updateLocation, 1000);
 }
-
 // Call this function after initializing the Leaflet map
 addCurrentLocationMarker(map);
-
 // Define different base layers
 const osmLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
  maxZoom: 19,
@@ -284,7 +281,6 @@ const trafficLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=m,traffic&hl=en&
  attribution: "© QuantaSIP",
  subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
 });
-
 // Add base layers control to the map
 const baseLayers = {
  "Google Road Map": osmLayer,
@@ -293,7 +289,6 @@ const baseLayers = {
  "Google Terrain Map": terrainLayer,
  "Google Traffic Map": trafficLayer
 };
-
 // Default to OSM layer
 hybridLayer.addTo(map);
 
@@ -324,7 +319,7 @@ if (panel.classList.contains('show')) {
 // Function to fetch feature info from WMS via a proxy and populate select options
 async function populateSelectOptions() {
     // Hardcode district names
-    const districts = ['Amravati', 'Yavatmal'];
+    const districts = ['Churu'];
     // Populate district select options
     populateSelect('district', districts);
 }
@@ -366,7 +361,7 @@ function showErrorToast(message) {
 // Function to fetch tehsils based on selected district
 async function fetchTehsils(district) {
     showProgressBar('tehsil');
-    const layer = district === 'Amravati' ? 'ne:Amravati_Tehsil_Update' : 'ne:Yavatmal_Tehsil_Update';
+    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -392,7 +387,7 @@ async function fetchTehsils(district) {
 async function fetchVillages(district, tehsil) {
     showProgressBar('village');
 
-    const layer = district === 'Amravati' ? 'ne:Amravati_Villages' : 'ne:Yavatmal_Villages';
+    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -419,8 +414,8 @@ async function fetchVillages(district, tehsil) {
 async function fetchKhasras(district, tehsil, village) {
     showProgressBar('khasra_no');
 
-    const layer = district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal';
-    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}' AND village='${village}'`;
+    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=village='${village}'`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
@@ -449,44 +444,11 @@ let VillageLayer;
 document.getElementById('district').addEventListener('change', function () {
     const district = this.value;
     if (district) {
-        fetchTehsils(district);
-        populateSelect('tehsil', []);
+        populateSelect('tehsil', ['Bhanipura']);
         populateSelect('village', []);
         populateSelect('khasra_no', []);
     }
-     // Add District Tehsil Layer
-
-    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}'`;
-    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-    // Fetch BBOX and Zoom to Layer
-    fetch(url)
-       .then(response => response.json())
-        .then(data => {
-            if (data.features.length > 0) {
-                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
-                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                DistrictLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_District`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-    TehsilLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-
-    // Set zIndex to ensure it appears above base layers
-    districtLayer.setZIndex(400);
-    TehsilLayer.setZIndex(400);
-
-                // Set the map view to the center of the district
-                map.setView(center, 12); // Adjust zoom as needed
-            }
-        })
-        .catch(error => console.error("Error fetching BBOX:", error));
 });
-
 document.getElementById('tehsil').addEventListener('change', function () {
     const district = document.getElementById('district').value;
     const tehsil = this.value;
@@ -494,106 +456,15 @@ document.getElementById('tehsil').addEventListener('change', function () {
         fetchVillages(district, tehsil);
         populateSelect('khasra_no', []);
     }
-     // Add District Tehsil Layer
-
-    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}'`;
-    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-
-
-    // Fetch BBOX and Zoom to Layer
-    fetch(url)
-       .then(response => response.json())
-        .then(data => {
-            if (data.features.length > 0) {
-                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
-                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                DistrictLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_District`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-    TehsilLayer= L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-    VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_Villages`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-
-    // Add Current WMS Layer
-    currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true,
-        CQL_FILTER: `district='${district}'AND tehsil='${tehsil}'` // Show only selected village and khasra number
-    }).addTo(map);
-
-    // Set zIndex to ensure it appears above base layers
-    DistrictLayer.setZIndex(400);
-    currentWMSLayer.setZIndex(400);
-    VillageLayer.setZIndex(400);
-    TehsilLayer.setZIndex(400);
-
-                // Set the map view to the center of the district
-                map.setView(center, 12); // Adjust zoom as needed
-            }
-        })
-        .catch(error => console.error("Error fetching BBOX:", error));
 });
-
 document.getElementById('village').addEventListener('change', function () {
     const district = document.getElementById('district').value;
     const tehsil = document.getElementById('tehsil').value;
     const village = this.value;
-
     if (district && tehsil && village) {
         fetchKhasras(district, tehsil, village);
     }
 
-    // Add District Tehsil Layer
-
-    const geoserverUrl=`http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=ne:${district.toLowerCase()}&outputFormat=application/json&CQL_FILTER=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'`;
-    const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
-
-
-    // Fetch BBOX and Zoom to Layer
-    fetch(url)
-       .then(response => response.json())
-        .then(data => {
-            if (data.features.length > 0) {
-                const bbox = turf.bbox(data.features[0]); // Using Turf.js to get BBOX
-                const center = [(bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2];
-                TehsilLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_Tehsil_Update`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-    VillageLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district}_Villages`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true
-    }).addTo(map);
-    // Add Current WMS Layer
-    currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-        layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
-        format: 'image/png',
-        transparent: true,
-        CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village and khasra number
-    }).addTo(map);
-
-    // Set zIndex to ensure it appears above base layers
-    TehsilLayer.setZIndex(400);
-    currentWMSLayer.setZIndex(400);
-    VillageLayer.setZIndex(400);
-
-                // Set the map view to the center of the district
-                map.setView(center, 12); // Adjust zoom as needed
-            }
-        })
-        .catch(error => console.error("Error fetching BBOX:", error));
 });
 
 // Call function to populate district dropdown when page loads
@@ -634,7 +505,7 @@ document.getElementById('search-btn').addEventListener('click', async function (
     const escapedKhasraNo = khasraNo.replace(/'/g, "''");
 
     // Construct the GetFeatureInfo URL based on selected values
-    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Amravati' ? 'ne:amravati' : 'ne:yavatmal'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
     // Proxy URL
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
     try {
@@ -698,10 +569,10 @@ map.on('click', async (e) => {
    }
    const { lat, lng } = e.latlng;
    // Construct the GeoServer GetFeatureInfo URL for Amravati layer
-   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:amravati&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:Bhanipura&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
 
    // Construct the GeoServer GetFeatureInfo URL for Yavatmal layer
-   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:yavatmal&query_layers=ne:yavatmal&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:yavatmal&query_layers=ne:Bhanipura&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
 
    // Proxy URL for both Amravati and Yavatmal layers
    const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
