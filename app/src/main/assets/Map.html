@@ -361,7 +361,7 @@ function showErrorToast(message) {
 // Function to fetch tehsils based on selected district
 async function fetchTehsils(district) {
     showProgressBar('tehsil');
-    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
+    const layer = district === 'Churu' ? 'ne:Bidasar' : 'ne:Bidasar';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -387,7 +387,7 @@ async function fetchTehsils(district) {
 async function fetchVillages(district, tehsil) {
     showProgressBar('village');
 
-    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
+    const layer = tehsil === 'Bidasar' ? 'ne:Bidasar' : 'ne:Sujangarh';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -414,7 +414,7 @@ async function fetchVillages(district, tehsil) {
 async function fetchKhasras(district, tehsil, village) {
     showProgressBar('khasra_no');
 
-    const layer = district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura';
+    const layer = tehsil === 'Bidasar' ? 'ne:Bidasar' : 'ne:Sujangarh';
     const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=village='${village}'`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
@@ -444,7 +444,7 @@ let VillageLayer;
 document.getElementById('district').addEventListener('change', function () {
     const district = this.value;
     if (district) {
-        populateSelect('tehsil', ['Bhanipura']);
+        populateSelect('tehsil', ['Bidasar','Sujangarh']);
         populateSelect('village', []);
         populateSelect('khasra_no', []);
     }
@@ -505,7 +505,7 @@ document.getElementById('search-btn').addEventListener('click', async function (
     const escapedKhasraNo = khasraNo.replace(/'/g, "''");
 
     // Construct the GetFeatureInfo URL based on selected values
-    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${district === 'Churu' ? 'ne:Bhanipura' : 'ne:Bhanipura'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${tehsil === 'Bidasar' ? 'ne:Bidasar' : 'ne:Sujangarh'}&outputFormat=application%2Fjson&cql_filter=district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}' AND khasra_no='${escapedKhasraNo}'`;
     // Proxy URL
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
     try {
@@ -542,10 +542,10 @@ document.getElementById('search-btn').addEventListener('click', async function (
 
             // Add WMS layer for the selected district
             currentWMSLayer = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms', {
-                layers: `ne:${district.toLowerCase()}`, // Use district name as layer name
+                layers: `ne:${tehsil}`, // Use district name as layer name
                 format: 'image/png',
                 transparent: true,
-                CQL_FILTER: `district='${district}' AND tehsil='${tehsil}' AND village='${escapedVillage}'` // Show only selected village and khasra number
+                CQL_FILTER: `village='${escapedVillage}'` // Show only selected village and khasra number
             }).addTo(map);
             // Set WMS layer zIndex to ensure it appears above base layers
             currentWMSLayer.setZIndex(400);
@@ -569,10 +569,10 @@ map.on('click', async (e) => {
    }
    const { lat, lng } = e.latlng;
    // Construct the GeoServer GetFeatureInfo URL for Amravati layer
-   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:amravati&query_layers=ne:Bhanipura&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Bidasar&query_layers=ne:Bidasar&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
 
    // Construct the GeoServer GetFeatureInfo URL for Yavatmal layer
-   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:yavatmal&query_layers=ne:Bhanipura&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Sujangarh&query_layers=ne:Sujangarh&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
 
    // Proxy URL for both Amravati and Yavatmal layers
    const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
@@ -705,7 +705,6 @@ const propertiesToShow = [
        } else {
            console.error('Error: Could not retrieve Yavatmal feature information');
        }
-
    } catch (error) {
        console.error('Error fetching feature info:', error);
    }
@@ -723,6 +722,7 @@ document.getElementById("navigateBtn").addEventListener("click", function () {
 
         if (currentPolygonLayerAmravati) geoJsonLayers.push(currentPolygonLayerAmravati);
         if (currentPolygonLayerAkola) geoJsonLayers.push(currentPolygonLayerAkola);
+        if (currentPolygonGroup) geoJsonLayers.push(currentPolygonGroup);
 
         if (geoJsonLayers.length === 0) {
             alert("Please select A Destination.");
@@ -785,12 +785,10 @@ function drawShortestRoute(start, end) {
         console.error("Leaflet Routing Machine is not loaded.");
         return;
     }
-
     // Remove existing route
     if (window.routingControl) {
         map.removeControl(window.routingControl);
     }
-
     // Create new route with no markers and no text instructions
     window.routingControl = L.Routing.control({
         waypoints: [start, end],

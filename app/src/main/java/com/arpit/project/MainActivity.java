@@ -1,21 +1,19 @@
 package com.arpit.project;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -28,25 +26,35 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private boolean doubleBackToExitPressedOnce = false;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     private LocationManager locationManager;
     private double latitude = 0.0, longitude = 0.0;
-    private Handler handler = new Handler();
-    private Runnable resetDoubleBackFlag = new Runnable() {
-        @Override
-        public void run() {
-            doubleBackToExitPressedOnce = false;
-        }
-    };
+    private final Handler handler = new Handler();
+    private final Runnable resetDoubleBackFlag = () -> doubleBackToExitPressedOnce = false;
 
+    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        String expirationDate = "2025-02-24";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String currentDate = sdf.format(new Date());
+
+        if (currentDate.compareTo(expirationDate) > 0) {
+            showExpiryDialog();
+        } else {
+            setContentView(R.layout.activity_main);
+        }
         webView = findViewById(R.id.webView);
+
         ImageButton btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         // Request location updates
@@ -65,30 +73,23 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, true);
             }
         });
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-            } else {
-                loadMap();
-            }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             loadMap();
         }
-        btnAddInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Pass the location to AddInfoActivity
-                Intent intent = new Intent(MainActivity.this, AddInfoActivity.class);
-                intent.putExtra("latitude", latitude);
-                intent.putExtra("longitude", longitude);
-                startActivity(intent);
-            }
+        btnAddInfo.setOnClickListener(v -> {
+            // Pass the location to AddInfoActivity
+            Intent intent = new Intent(MainActivity.this, AddInfoActivity.class);
+            intent.putExtra("latitude", latitude);
+            intent.putExtra("longitude", longitude);
+            startActivity(intent);
         });
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayShowHomeEnabled(true);
-            actionBar.setIcon(resizeLogo(R.drawable.logo, 0, 0));
+            actionBar.setIcon(resizeLogo());
         }
     }
 
@@ -100,6 +101,16 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
+    }
+    private void showExpiryDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("App Expired")
+                .setMessage("This version of the app has expired. Please update to continue using it.")
+                .setCancelable(false)
+                .setPositiveButton("OK", (dialog, which) -> {
+                    finish(); // Close the app
+                })
+                .show();
     }
 
     @Override
@@ -143,10 +154,10 @@ public class MainActivity extends AppCompatActivity {
         handler.removeCallbacks(resetDoubleBackFlag); // Clean up the handler when activity is destroyed
     }
 
-    private Drawable resizeLogo(int drawableId, int width, int height) {
-        Drawable drawable = ContextCompat.getDrawable(this, drawableId);
+    private Drawable resizeLogo() {
+        @SuppressLint("ResourceType") Drawable drawable = ContextCompat.getDrawable(this, 2131165402);
         if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
+            drawable.setBounds(0, 0, 0, 0);
         }
         return drawable;
     }
@@ -154,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, new LocationListener() {
                 @Override
-                public void onLocationChanged(Location location) {
+                public void onLocationChanged(@NonNull Location location) {
                     latitude = location.getLatitude();
                     longitude = location.getLongitude();
                 }
@@ -163,10 +174,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onStatusChanged(String provider, int status, Bundle extras) {}
 
                 @Override
-                public void onProviderEnabled(String provider) {}
+                public void onProviderEnabled(@NonNull String provider) {}
 
                 @Override
-                public void onProviderDisabled(String provider) {}
+                public void onProviderDisabled(@NonNull String provider) {}
             });
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
