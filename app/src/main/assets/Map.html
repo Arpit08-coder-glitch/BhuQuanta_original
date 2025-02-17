@@ -385,10 +385,11 @@ async function fetchTehsils(district) {
 
 // Function to fetch villages based on selected tehsil and district
 async function fetchVillages(district, tehsil) {
+    populateSelect('village', []);
     showProgressBar('village');
 
     const layer = tehsil === 'Bidasar' ? 'ne:Bidasar' : 'ne:Sujangarh';
-    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson&cql_filter=tehsil='${tehsil}'`;
+    const geoserverUrl = `http://gs.quantasip.com/geoserver/ne/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=${layer}&outputFormat=application%2Fjson`;
 
     const url = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrl)}`;
 
@@ -400,7 +401,10 @@ async function fetchVillages(district, tehsil) {
             const villages = new Set();
             data.features.forEach(feature => villages.add(feature.properties.village));
 
-            populateSelect('village', Array.from(villages));
+            // Convert Set to Array and sort in ascending order
+            const sortedVillages = Array.from(villages).sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+            populateSelect('village', sortedVillages);
         }
     } catch (error) {
         console.error('Error fetching villages:', error);
@@ -427,7 +431,19 @@ async function fetchKhasras(district, tehsil, village) {
             const khasras = new Set();
             data.features.forEach(feature => khasras.add(feature.properties.khasra_no));
 
-            populateSelect('khasra_no', Array.from(khasras));
+            // Convert Set to Array and sort khasra numbers correctly
+            const sortedKhasras = Array.from(khasras).sort((a, b) => {
+                // Extract numbers for sorting while keeping fractional parts in order
+                const numA = a.split('/').map(Number);
+                const numB = b.split('/').map(Number);
+
+                if (numA[0] !== numB[0]) {
+                    return numA[0] - numB[0]; // Compare main numbers
+                }
+                return (numA[1] || 0) - (numB[1] || 0); // Compare fractional parts
+            });
+
+            populateSelect('khasra_no', sortedKhasras);
         }
     } catch (error) {
         console.error('Error fetching khasra numbers:', error);
@@ -474,11 +490,12 @@ let currentPolygonGroup = null;
 let currentPolygonLayerAmravati = null;
 let currentPolygonLayerAkola = null;
 let currentWMSLayer = null;
+let village= null;
 // Function to handle search button click
 document.getElementById('search-btn').addEventListener('click', async function () {
     const district = document.getElementById('district').value;
     const tehsil = document.getElementById('tehsil').value;
-    const village = document.getElementById('village').value;
+    village = document.getElementById('village').value;
     const khasraNo = document.getElementById('khasra_no').value; // Get Khasra Number
 
     // Remove current polygon layers (if any) when search button is clicked
@@ -549,6 +566,7 @@ document.getElementById('search-btn').addEventListener('click', async function (
             }).addTo(map);
             // Set WMS layer zIndex to ensure it appears above base layers
             currentWMSLayer.setZIndex(400);
+            currentWMSLayer.setMaxZoom(80);
         } else {
             console.log('No features found for the selected district, tehsil, village, and khasra number.');
         }
@@ -567,12 +585,13 @@ map.on('click', async (e) => {
        map.removeLayer(currentPolygonGroup);
        currentPolygonGroup = null;
    }
+   const escapedVillage = village.replace(/'/g, "''");
    const { lat, lng } = e.latlng;
    // Construct the GeoServer GetFeatureInfo URL for Amravati layer
-   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Bidasar&query_layers=ne:Bidasar&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAmravati = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Bidasar&query_layers=ne:Bidasar&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}&cql_filter=village='${escapedVillage}'`;
 
    // Construct the GeoServer GetFeatureInfo URL for Yavatmal layer
-   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Sujangarh&query_layers=ne:Sujangarh&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}`;
+   const geoserverUrlAkola = `http://gs.quantasip.com/geoserver/ne/wms?service=WMS&version=1.1.1&request=GetFeatureInfo&layers=ne:Sujangarh&query_layers=ne:Sujangarh&info_format=application/json&x=50&y=50&height=101&width=101&srs=EPSG:4326&bbox=${lng-0.001},${lat-0.001},${lng+0.001},${lat+0.001}&cql_filter=village='${escapedVillage}'`;
 
    // Proxy URL for both Amravati and Yavatmal layers
    const urlAmravati = `http://3.109.124.23:3000/proxy?url=${encodeURIComponent(geoserverUrlAmravati)}`;
