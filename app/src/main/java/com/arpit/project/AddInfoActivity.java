@@ -1,5 +1,6 @@
 package com.arpit.project;
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -27,25 +28,23 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import android.location.Location;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.tasks.OnSuccessListener;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import android.widget.TextView;
 import java.util.List;
+import java.util.Objects;
 
 public class AddInfoActivity extends AppCompatActivity {
     private EditText etCrop, etCropStage;
     private ImageView imagePreview;
-    private Button btnUploadImage, btnSubmit;
-    private Uri imageUri;
     private String imageBase64 = "";
     private TextView tvDateTime;
 
     private static final int PICK_IMAGE_REQUEST = 1;
-    private static final int CAMERA_REQUEST_CODE = 2;
 
     private double latitude, longitude;
     private FusedLocationProviderClient fusedLocationClient;
@@ -57,8 +56,8 @@ public class AddInfoActivity extends AppCompatActivity {
         etCrop = findViewById(R.id.etCrop);
         etCropStage = findViewById(R.id.etCropStage);
         imagePreview = findViewById(R.id.imagePreview);
-        btnUploadImage = findViewById(R.id.btnUploadImage);
-        btnSubmit = findViewById(R.id.btnSubmit);
+        Button btnUploadImage = findViewById(R.id.btnUploadImage);
+        Button btnSubmit = findViewById(R.id.btnSubmit);
         // Find the TextView where you want to show the date and time
         tvDateTime = findViewById(R.id.tvDateTime);
         // Get current date and time
@@ -71,7 +70,7 @@ public class AddInfoActivity extends AppCompatActivity {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         // Get current location
         getCurrentLocation();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
                     checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
                     checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
@@ -89,46 +88,33 @@ public class AddInfoActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayShowHomeEnabled(true);
-            actionBar.setIcon(resizeLogo(R.drawable.logo, 0, 0));
+            actionBar.setIcon(resizeLogo());
         }
         // Get coordinates from MainActivity
         latitude = getIntent().getDoubleExtra("latitude", 0.0);
         longitude = getIntent().getDoubleExtra("longitude", 0.0);
 
         // Handle image upload
-        btnUploadImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showImagePickerDialog();
-            }
-        });
+        btnUploadImage.setOnClickListener(v -> showImagePickerDialog());
         // Handle form submission
-        btnSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                saveDataToFirestore();
-            }
-        });
+        btnSubmit.setOnClickListener(v -> saveDataToFirestore());
     }
-    private Drawable resizeLogo(int drawableId, int width, int height) {
-        Drawable drawable = ContextCompat.getDrawable(this, drawableId);
+    private Drawable resizeLogo() {
+        @SuppressLint("ResourceType") Drawable drawable = ContextCompat.getDrawable(this, 2131165402);
         if (drawable != null) {
-            drawable.setBounds(0, 0, width, height);
+            drawable.setBounds(0, 0, 0, 0);
         }
         return drawable;
     }
     private void getCurrentLocation() {
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location != null) {
-                                latitude = location.getLatitude();
-                                longitude = location.getLongitude();
-                            } else {
-                                Toast.makeText(AddInfoActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
-                            }
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            latitude = location.getLatitude();
+                            longitude = location.getLongitude();
+                        } else {
+                            Toast.makeText(AddInfoActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
                         }
                     });
         } else {
@@ -136,6 +122,7 @@ public class AddInfoActivity extends AppCompatActivity {
         }
     }
     // Show image picker dialog (Camera or Gallery)
+    @SuppressLint("IntentReset")
     private void showImagePickerDialog() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");
@@ -157,7 +144,8 @@ public class AddInfoActivity extends AppCompatActivity {
                 imagePreview.setVisibility(View.VISIBLE); // Show the image preview
             } else {
                 // Camera Image
-                Bitmap photo = (Bitmap) data.getExtras().get("data");
+                assert data != null;
+                Bitmap photo = (Bitmap) Objects.requireNonNull(data.getExtras()).get("data");
                 if (photo != null) {
                     convertBitmapToBase64(photo);
                     imagePreview.setImageBitmap(photo); // Update ImageView
@@ -259,9 +247,7 @@ public class AddInfoActivity extends AppCompatActivity {
                                 // Delete from local database after successful sync
                                 cropInfoDao.deleteById(data.id);
                             })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Failed to sync data", Toast.LENGTH_SHORT).show();
-                            });
+                            .addOnFailureListener(e -> Toast.makeText(this, "Failed to sync data", Toast.LENGTH_SHORT).show());
                 }
                 Toast.makeText(this, "Local data synced to Firestore!", Toast.LENGTH_SHORT).show();
             }
