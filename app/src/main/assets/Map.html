@@ -350,17 +350,16 @@ const geojsonLayer2 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms'
                 layers: `ne:CHM`, // Use district name as layer name
                 format: 'image/png',
                 transparent: true,
+                maxZoom: 80,
             }).addTo(map);
-geojsonLayer2.setZIndex(400);
+geojsonLayer2.setZIndex(401);
 var isLayerVisible = true;
 
 document.getElementById('toggleGeoJSONBtn').addEventListener('click', function() {
     if (isLayerVisible) {
-        // Hide the layer
         map.removeLayer(geojsonLayer2);
         this.classList.remove('on'); // Remove the 'on' class for the toggle button
     } else {
-        // Show the layer
         geojsonLayer2.addTo(map);
         this.classList.add('on'); // Remove the 'on' class for the toggle button
     }
@@ -635,11 +634,11 @@ document.getElementById('search-btn').addEventListener('click', async function (
                 layers: `ne:${tehsil}`, // Use district name as layer name
                 format: 'image/png',
                 transparent: true,
-                CQL_FILTER: `village='${escapedVillage}'` // Show only selected village and khasra number
+                CQL_FILTER: `village='${escapedVillage}'`,
+                maxZoom: 80,
             }).addTo(map);
             // Set WMS layer zIndex to ensure it appears above base layers
             currentWMSLayer.setZIndex(400);
-            currentWMSLayer.setMaxZoom(80);
         } else {
             console.log('No features found for the selected district, tehsil, village, and khasra number.');
         }
