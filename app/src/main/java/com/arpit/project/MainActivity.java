@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private Drawable resizeLogo() {
-        @SuppressLint("ResourceType") Drawable drawable = ContextCompat.getDrawable(this, 2131165402);
+        Drawable drawable = ContextCompat.getDrawable(this, R.drawable.logo0);
         if (drawable != null) {
             drawable.setBounds(0, 0, 0, 0);
         }

@@ -20,7 +20,7 @@ public class AboutUs extends AppCompatActivity {
         // Setup the action bar
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setIcon(R.drawable.logo);
+            actionBar.setIcon(R.drawable.logo0);
         }
     }
 
@@ -33,7 +33,7 @@ public class AboutUs extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+        item.getItemId();
 
             // Handle clicks on the logout button
             logout();

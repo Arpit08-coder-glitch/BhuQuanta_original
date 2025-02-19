@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -16,7 +15,8 @@
         android:layout_gravity="center"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="20dp"
-        android:src="@drawable/logo" />
+        android:importantForAccessibility="no"
+        android:src="@drawable/logo0" />
 
     <!-- Login Title -->
     <TextView
@@ -27,7 +27,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:layout_marginBottom="20dp"
-        />
+        tools:ignore="HardcodedText" />
 
     <!-- Email EditText -->
     <EditText
@@ -36,10 +36,12 @@
         android:layout_height="55dp"
         android:background="@drawable/edittext_border"
         android:hint="Email Address"
+        android:importantForAutofill="no"
         android:inputType="textEmailAddress"
         android:padding="10dp"
         android:drawableStart="@drawable/ic_email"
-        android:drawablePadding="10dp"/>
+        android:drawablePadding="10dp"
+        tools:ignore="HardcodedText" />
 
     <!-- Password EditText -->
     <EditText
@@ -49,10 +51,12 @@
         android:layout_marginTop="20dp"
         android:background="@drawable/edittext_border"
         android:hint="Password"
+        android:importantForAutofill="no"
         android:inputType="textPassword"
         android:padding="10dp"
         android:drawableStart="@drawable/ic_lock"
-        android:drawablePadding="10dp"/>
+        android:drawablePadding="10dp"
+        tools:ignore="HardcodedText" />
 
     <!-- Forgot Password Button -->
     <Button
@@ -65,7 +69,8 @@
         android:text="Forgot Password?"
         android:textColor="#363A96"
         android:textSize="14sp"
-        android:layout_marginRight="90dp"/>
+        android:layout_marginRight="90dp"
+        tools:ignore="HardcodedText,RtlHardcoded" />
 
     <!-- Login Button -->
     <Button
@@ -76,7 +81,8 @@
         android:background="#363A96"
         android:text="Login"
         android:textColor="@android:color/white"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        tools:ignore="HardcodedText" />
 
     <!-- Sign Up Section -->
     <LinearLayout
@@ -85,13 +91,15 @@
         android:layout_marginTop="5dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginLeft="70dp">
+        android:layout_marginLeft="70dp"
+        tools:ignore="RtlHardcoded">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Don't have an account?"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/black"
+            tools:ignore="HardcodedText" />
 
         <Button
             android:id="@+id/createBtn"
@@ -100,7 +108,8 @@
             android:background="@android:color/transparent"
             android:text="Sign up"
             android:textColor="#363A96"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            tools:ignore="HardcodedText,TextSizeCheck" />
     </LinearLayout>
 
     <!-- Divider with 'or' -->
@@ -120,10 +129,11 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:text="or"
             android:textColor="@android:color/darker_gray"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp" />
+            tools:ignore="HardcodedText,TextContrastCheck" />
 
         <View
             android:layout_width="0dp"
@@ -141,7 +151,8 @@
         android:background="@drawable/common_google_signin_btn_text_light"
         android:text="Sign in with Google"
         android:textColor="#000000"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        tools:ignore="HardcodedText" />
 
     <Button
         android:id="@+id/aboutus"
@@ -150,10 +161,9 @@
         android:layout_marginTop="100dp"
         android:background="@android:color/transparent"
         android:minHeight="48dp"
-        android:onClick="onSignUpClicked"
         android:text="About Us"
         android:textAlignment="center"
         android:textColor="#363A96"
         android:textSize="12sp"
-        tools:ignore="OnClick" />
+        tools:ignore="HardcodedText,OnClick,TouchTargetSizeCheck" />
 </LinearLayout>
