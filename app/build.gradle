@@ -9,7 +9,6 @@ plugins {
 
 android {
     compileSdkVersion 35
-
     defaultConfig {
         applicationId "com.arpit.project"
         minSdk 29
@@ -17,7 +16,6 @@ android {
         targetSdkVersion 33
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -59,7 +57,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth-api-phone:18.1.0'
     implementation 'com.google.gms:google-services:4.4.2'
     implementation 'com.google.firebase:firebase-auth:23.2.0'
-    implementation 'com.google.android.gms:play-services-maps:19.0.0'
+    implementation 'com.google.android.gms:play-services-maps:19.1.0'
     implementation platform('com.google.firebase:firebase-bom:33.9.0')
     implementation 'com.google.firebase:firebase-firestore:25.1.2'
     implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
