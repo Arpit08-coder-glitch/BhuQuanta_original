@@ -26,6 +26,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private boolean doubleBackToExitPressedOnce = false;
@@ -40,6 +44,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        String expirationDate = "2025-03-01";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String currentDate = sdf.format(new Date());
+
+        if (currentDate.compareTo(expirationDate) > 0) {
+            showExpiryDialog();
+        } else {
+            setContentView(R.layout.activity_main);
+        }
         webView = findViewById(R.id.webView);
 
         ImageButton btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
@@ -88,6 +101,16 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
+    }
+    private void showExpiryDialog() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("App Expired")
+                .setMessage("This version of the app has expired. Please update to continue using it.")
+                .setCancelable(false)
+                .setPositiveButton("OK", (dialog, which) -> {
+                    finish(); // Close the app
+                })
+                .show();
     }
 
     @Override
