@@ -43,15 +43,10 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         Objects.requireNonNull(getSupportActionBar()).hide();
-        String expirationDate = "2025-03-01";
+        String expirationDate = "2025-04-01";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String currentDate = sdf.format(new Date());
 
-        if (currentDate.compareTo(expirationDate) > 0) {
-            showExpiryDialog();
-        } else {
-            setContentView(R.layout.activity_login);
-        }
 
         auth = FirebaseAuth.getInstance();
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)

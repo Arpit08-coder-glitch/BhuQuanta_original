@@ -44,15 +44,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        String expirationDate = "2025-03-01";
+        String expirationDate = "2025-04-01";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String currentDate = sdf.format(new Date());
 
-        if (currentDate.compareTo(expirationDate) > 0) {
-            showExpiryDialog();
-        } else {
-            setContentView(R.layout.activity_main);
-        }
         webView = findViewById(R.id.webView);
 
         ImageButton btnAddInfo = findViewById(R.id.btnAddInfo); // Reference button
