@@ -354,7 +354,6 @@ const geojsonLayer2 = L.tileLayer.wms('http://gs.quantasip.com/geoserver/ne/wms'
             }).addTo(map);
 geojsonLayer2.setZIndex(401);
 var isLayerVisible = true;
-
 document.getElementById('toggleGeoJSONBtn').addEventListener('click', function() {
     if (isLayerVisible) {
         map.removeLayer(geojsonLayer2);
