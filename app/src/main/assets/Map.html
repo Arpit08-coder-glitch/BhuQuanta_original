@@ -914,6 +914,9 @@ function computeCentroid(latlngs) {
 
     return L.latLng(sumLat / count, sumLng / count);
 }
+map.on('click', function(e) {
+    Android.onMapClick(e.latlng.lat, e.latlng.lng);
+});
 </script>
 </body>
 </html>
