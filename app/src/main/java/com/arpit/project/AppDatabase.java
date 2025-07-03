@@ -7,7 +7,6 @@ import androidx.room.RoomDatabase;
 @Database(entities = {CropInfo.class}, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
     private static AppDatabase instance;
-
     public abstract CropInfoDao cropInfoDao();
 
     public static synchronized AppDatabase getInstance(Context context) {

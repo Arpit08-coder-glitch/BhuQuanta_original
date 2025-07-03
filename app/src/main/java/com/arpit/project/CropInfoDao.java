@@ -8,7 +8,6 @@ import java.util.List;
 public interface CropInfoDao {
     @Insert
     void insert(CropInfo cropInfo);
-
     @Query("SELECT * FROM crop_info")
     List<CropInfo> getAllCropInfo();
 

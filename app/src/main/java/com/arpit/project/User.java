@@ -1,7 +1,9 @@
 package com.arpit.project;
 
 public class User {
-    private String name,email,pass,phone;
+    private String name;
+    private String pass;
+    private String phone;
 
     public User(){
 
@@ -15,12 +17,7 @@ public class User {
         this.name = name;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
     public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPass() {

@@ -1,6 +1,5 @@
 package com.arpit.project;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,7 +23,6 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 
-import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -43,9 +41,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         Objects.requireNonNull(getSupportActionBar()).hide();
-        String expirationDate = "2025-04-01";
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String currentDate = sdf.format(new Date());
+        new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
 
         auth = FirebaseAuth.getInstance();
@@ -119,17 +115,6 @@ public class LoginActivity extends AppCompatActivity {
         googleBtn.setOnClickListener(v -> googleSignIn());
 
         aboutus.setOnClickListener(v -> startActivity(new Intent(LoginActivity.this, AboutUs.class)));
-    }
-
-    private void showExpiryDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("App Expired")
-                .setMessage("This version of the app has expired. Please update to continue using it.")
-                .setCancelable(false)
-                .setPositiveButton("OK", (dialog, which) -> {
-                    finish(); // Close the app
-                })
-                .show();
     }
 
     private void googleSignIn() {

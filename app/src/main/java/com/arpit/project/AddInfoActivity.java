@@ -43,7 +43,6 @@ public class AddInfoActivity extends AppCompatActivity {
     private ImageView imagePreview;
     private String imageBase64 = "";
     private TextView tvDateTime;
-
     private static final int PICK_IMAGE_REQUEST = 1;
 
     private double latitude, longitude;

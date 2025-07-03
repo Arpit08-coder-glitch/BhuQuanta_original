@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey;
 public class CropInfo {
     @PrimaryKey(autoGenerate = true)
     public int id;
-
     public double latitude;
     public double longitude;
     public String crop;

@@ -44,9 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        String expirationDate = "2025-04-01";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String currentDate = sdf.format(new Date());
+        sdf.format(new Date());
 
         webView = findViewById(R.id.webView);
 
@@ -96,16 +95,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
-    }
-    private void showExpiryDialog() {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("App Expired")
-                .setMessage("This version of the app has expired. Please update to continue using it.")
-                .setCancelable(false)
-                .setPositiveButton("OK", (dialog, which) -> {
-                    finish(); // Close the app
-                })
-                .show();
     }
 
     @Override
